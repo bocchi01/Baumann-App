@@ -1,0 +1,124 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+// --------------------------------------------------
+// TEMA UFFICIALE DELL'APP ISTITUTO BAUMANN
+// --------------------------------------------------
+// Versione Definitiva - Palette colori basata sul logo ufficiale.
+// --------------------------------------------------
+
+class AppTheme {
+  // --- PALETTE COLORI UFFICIALE ---
+
+  /// Colore primario: il blu istituzionale estratto dal banner ufficiale.
+  static const Color baumannPrimaryBlue = Color(0xFF2E5B94);
+
+  /// Colore di accento: l'arancione vibrante estratto direttamente dal logo.
+  /// Usato per le call-to-action e gli elementi da evidenziare.
+  static const Color baumannAccentOrange = Color(0xFFF37021);
+
+  /// Colore secondario: una versione più chiara e armonica del blu primario.
+  static const Color baumannSecondaryBlue = Color(0xFF5C85C1);
+
+  /// Colore per gli sfondi principali dell'app.
+  static const Color background = Color(0xFFF7F8FA);
+
+  /// Colore per il testo principale.
+  static const Color textPrimary = Color(0xFF1A1A1A);
+
+  /// Colore per il testo secondario o descrizioni.
+  static const Color textSecondary = Color(0xFF6B7280);
+
+  /// Colore per i bordi o i divisori.
+  static const Color border = Color(0xFFE5E7EB);
+
+  // --- TEMA GENERALE DELL'APP ---
+
+  static ThemeData get themeData {
+    return ThemeData(
+      // Impostazioni colori principali
+      primaryColor: baumannPrimaryBlue,
+      scaffoldBackgroundColor: background,
+      colorScheme: const ColorScheme.light(
+        primary: baumannPrimaryBlue,
+        secondary: baumannSecondaryBlue,
+        tertiary: baumannAccentOrange,
+        surface: background,
+        onSurface: textPrimary,
+        error: Colors.redAccent,
+        onPrimary: Colors.white,
+        onSecondary: Colors.white,
+      ),
+
+      // Impostazioni Tipografia
+      textTheme: GoogleFonts.montserratTextTheme().copyWith(
+        displayLarge: GoogleFonts.montserrat(
+            fontSize: 28, fontWeight: FontWeight.bold, color: textPrimary),
+        headlineMedium: GoogleFonts.montserrat(
+            fontSize: 22, fontWeight: FontWeight.bold, color: textPrimary),
+        bodyLarge: GoogleFonts.montserrat(fontSize: 16, color: textPrimary),
+        bodyMedium: GoogleFonts.montserrat(fontSize: 14, color: textSecondary),
+        labelLarge: GoogleFonts.montserrat(
+            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+
+      // Stile per le AppBar
+      appBarTheme: const AppBarTheme(
+        backgroundColor: background,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: baumannPrimaryBlue),
+        titleTextStyle: TextStyle(
+          fontFamily: 'Montserrat',
+          color: baumannPrimaryBlue,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+
+      // Stile per le Card
+      cardTheme: CardThemeData(
+        elevation: 2.0,
+        color: Colors.white,
+        shadowColor: Colors.black.withValues(alpha: 0.05),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.0),
+          side: const BorderSide(color: border, width: 1.0),
+        ),
+        margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      ),
+
+      // Stile per i Bottoni Principali
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: baumannPrimaryBlue,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+          textStyle:
+              GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+      ),
+
+      // Stile per i campi di testo
+      inputDecorationTheme: InputDecorationTheme(
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: baumannPrimaryBlue, width: 2.0),
+        ),
+        labelStyle: const TextStyle(color: textSecondary),
+      ),
+    );
+  }
+}
