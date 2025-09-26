@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../models/user_model.dart';
 
 abstract class IAuthRepository {
@@ -9,6 +11,88 @@ abstract class IAuthRepository {
   Future<UserModel> signInWithApple();
   Future<UserModel?> getCurrentUser();
   Future<void> signOut();
+}
+
+class FirebaseAuthRepository implements IAuthRepository {
+  FirebaseAuthRepository() : _auth = FirebaseAuth.instance;
+
+  final FirebaseAuth _auth;
+
+  @override
+  Future<UserModel> signInWithEmail(String email, String password) async {
+    try {
+      final UserCredential credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return _userFromFirebaseUser(credential.user!);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e.code));
+    }
+  }
+
+  @override
+  Future<UserModel> registerWithEmail(String email, String password) async {
+    try {
+      final UserCredential credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return _userFromFirebaseUser(credential.user!);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e.code));
+    }
+  }
+
+  @override
+  Future<UserModel> signInWithGoogle() async {
+    // TODO: Implement Google Sign-In with google_sign_in package
+    throw UnimplementedError('Google Sign-In not implemented yet');
+  }
+
+  @override
+  Future<UserModel> signInWithApple() async {
+    // TODO: Implement Apple Sign-In with sign_in_with_apple package
+    throw UnimplementedError('Apple Sign-In not implemented yet');
+  }
+
+  @override
+  Future<UserModel?> getCurrentUser() async {
+    final User? firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return null;
+    return _userFromFirebaseUser(firebaseUser);
+  }
+
+  @override
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  UserModel _userFromFirebaseUser(User user) {
+    return UserModel(
+      id: user.uid,
+      email: user.email ?? '',
+      name: user.displayName ?? 'User',
+      subscriptionStatus: 'free', // Default status, can be updated from Firestore
+    );
+  }
+
+  String _getErrorMessage(String errorCode) {
+    switch (errorCode) {
+      case 'user-not-found':
+        return 'Nessun utente trovato con questa email.';
+      case 'wrong-password':
+        return 'Password non corretta.';
+      case 'email-already-in-use':
+        return 'Esiste già un account con questa email.';
+      case 'weak-password':
+        return 'La password è troppo debole.';
+      case 'invalid-email':
+        return 'Email non valida.';
+      default:
+        return 'Errore di autenticazione: $errorCode';
+    }
+  }
 }
 
 class MockAuthRepository implements IAuthRepository {

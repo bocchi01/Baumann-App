@@ -1,17 +1,26 @@
 import 'dart:async';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'firebase_options.dart';
 import 'navigation/app_router.dart';
 import 'screens/auth_screen.dart';
 import 'theme/theme.dart';
 import 'utils/network_probe.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  GoogleFonts.config.allowRuntimeFetching = false;
+  
+  // Initialize Firebase with generated options
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // Allow GoogleFonts to fetch fonts at runtime so we don't depend on bundled assets.
+  GoogleFonts.config.allowRuntimeFetching = true;
   runApp(
     const ProviderScope(
       child: _LocalNetworkProbeInitializer(child: PostureApp()),

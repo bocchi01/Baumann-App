@@ -12,3 +12,6 @@ PRODUCT_BUNDLE_IDENTIFIER = com.example.postureApp
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2025 com.example. All rights reserved.
+
+// Minimum macOS version supported by the app and embedded pods
+MACOSX_DEPLOYMENT_TARGET = 11.0

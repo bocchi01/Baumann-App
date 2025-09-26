@@ -1,0 +1,61 @@
+{
+  "paths": [
+    {
+      "id": "percorso_ufficio_01",
+      "title": "Percorso Schiena Protetta in Ufficio",
+      "description": "Un programma di 8 settimane per chi lavora seduto.",
+      "durationInWeeks": 8,
+      "modules": [
+        {
+          "id": "settimana_01",
+          "weekNumber": 1,
+          "title": "Settimana 1: Mobilità e Fondamenta",
+          "sessions": [
+            {
+              "id": "giorno_01",
+              "dayNumber": 1,
+              "title": "Attivazione Mattutina",
+              "estimatedDurationInMinutes": 10,
+              "exercises": [
+                { "exerciseId": "gatto_cammello", "durationInSeconds": 60, "order": 1 },
+                { "exerciseId": "ponte_glutei", "reps": 15, "order": 2 }
+              ]
+            },
+            {
+              "id": "giorno_02",
+              "dayNumber": 2,
+              "title": "Pausa Pranzo Defaticante",
+              "estimatedDurationInMinutes": 5,
+              "exercises": [
+                { "exerciseId": "stretching_collo", "durationInSeconds": 60, "order": 1 }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "id": "gatto_cammello",
+      "name": "Mobilizzazione Gatto-Cammello",
+      "description": "Esercizio per mobilizzare la colonna vertebrale.",
+      "videoUrl": "https://placeholder.com/video1.mp4",
+      "targetArea": "Zona Lombare"
+    },
+    {
+      "id": "ponte_glutei",
+      "name": "Ponte Glutei",
+      "description": "Esercizio per rinforzare la catena posteriore.",
+      "videoUrl": "https://placeholder.com/video2.mp4",
+      "targetArea": "Zona Lombare"
+    },
+    {
+      "id": "stretching_collo",
+      "name": "Stretching Laterale del Collo",
+      "description": "Allungamento per i muscoli del collo.",
+      "videoUrl": "https://placeholder.com/video3.mp4",
+      "targetArea": "Colonna Cervicale"
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import '../models/daily_session.dart';
 import '../models/exercise.dart';
 import '../models/session_exercise.dart';
 import '../path/exercise_catalog.dart';
+import '../path/firestore_path_repository.dart';
 
 enum ExercisePlayerPhase {
   idle,
@@ -310,11 +311,22 @@ class ExercisePlayerController
   Future<void> _finishSession() async {
     _ticker?.cancel();
     await _pauseVideo();
+
+    unawaited(_markSessionCompletion(state.session.id));
     state = state.copyWith(
       isPlaying: false,
       countdownValue: 0,
       phase: ExercisePlayerPhase.finished,
     );
+  }
+
+  Future<void> _markSessionCompletion(String sessionId) async {
+    final IPathRepository repository = ref.read(pathRepositoryProvider);
+    try {
+      await repository.markSessionAsComplete(sessionId);
+    } catch (_) {
+      // Swallow errors so a failed write doesn't interrupt the session flow.
+    }
   }
 
   void _disposeResources() {

@@ -6,7 +6,7 @@ import '../models/daily_session.dart';
 import '../models/path_module.dart';
 import '../models/posture_path.dart';
 import '../models/user_model.dart';
-import '../path/path_repository.dart';
+import '../path/firestore_path_repository.dart';
 
 class DashboardState {
   const DashboardState({
@@ -52,9 +52,6 @@ class DashboardState {
   }
 }
 
-final Provider<MockPathRepository> pathRepositoryProvider =
-    Provider<MockPathRepository>((Ref ref) => MockPathRepository());
-
 final NotifierProvider<DashboardController, DashboardState>
     dashboardControllerProvider =
     NotifierProvider<DashboardController, DashboardState>(
@@ -72,8 +69,8 @@ class DashboardController extends Notifier<DashboardState> {
 
     try {
       final IAuthRepository authRepository = ref.read(authRepositoryProvider);
-      final MockPathRepository pathRepository =
-          ref.read(pathRepositoryProvider);
+    final IPathRepository pathRepository =
+      ref.read(pathRepositoryProvider);
 
       final UserModel? user = await authRepository.getCurrentUser();
       if (user == null) {

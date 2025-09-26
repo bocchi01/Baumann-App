@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/daily_session.dart';
 import '../models/path_module.dart';
 import '../models/posture_path.dart';
-import '../path/path_repository.dart';
+import '../path/firestore_path_repository.dart';
 
 class MyPathState {
   const MyPathState({
@@ -38,9 +38,6 @@ class MyPathState {
   }
 }
 
-final Provider<MockPathRepository> myPathRepositoryProvider =
-    Provider<MockPathRepository>((Ref ref) => MockPathRepository());
-
 final NotifierProvider<MyPathController, MyPathState> myPathControllerProvider =
     NotifierProvider<MyPathController, MyPathState>(MyPathController.new);
 
@@ -54,18 +51,10 @@ class MyPathController extends Notifier<MyPathState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-      final MockPathRepository repository =
-          ref.read(myPathRepositoryProvider);
+    final IPathRepository repository = ref.read(pathRepositoryProvider);
       final PosturePath path = await repository.fetchCurrentUserPath();
-
-      final List<DailySession> allSessions = path.modules
-          .expand((PathModule module) => module.sessions)
-          .toList(growable: false);
-
-      final Set<String> completedSessionIds = allSessions
-          .take(3)
-          .map((DailySession session) => session.id)
-          .toSet();
+    final Set<String> completedSessionIds =
+      await repository.getCompletedSessionIds();
 
       state = state.copyWith(
         isLoading: false,

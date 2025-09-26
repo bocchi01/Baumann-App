@@ -15,11 +15,33 @@ Flutter prototype featuring immutable data models and a complete authentication 
 flutter pub get
 ```
 
+### Fonts
+
+Google Fonts runtime fetching is enabled so the Montserrat family loads automatically at startup. If you need an offline build, bundle the fonts once with:
+
+```bash
+flutter pub run google_fonts:flutter_fonts
+```
+
+After bundling you can safely flip `GoogleFonts.config.allowRuntimeFetching` back to `false` in `lib/main.dart`.
+
 ## Run the app
 
 ```bash
 flutter run
 ```
+
+### macOS keychain fix
+
+macOS debug builds rely on the system Keychain to persist Firebase Auth sessions. Keychain Sharing is now enabled directly in the Xcode project so the correct entitlements flow through the normal signing process.
+
+To configure your environment:
+
+1. Open `macos/Runner.xcworkspace` in Xcode.
+2. Select the **Runner** target → **Signing & Capabilities** tab and pick your Apple Development Team. Xcode will generate the provisioning profile and keep the `com.example.postureApp` keychain group in sync.
+3. Run `flutter run -d macos` as usual. The bundle already includes the keychain entitlement, so Firebase Auth can save credentials without extra steps.
+
+If you rotate teams or need to reapply the entitlement for a custom build pipeline, the legacy helper script (`tool/dev_sign.sh`) is still available, but it now expects a fully provisioned build and is no longer required for day-to-day development.
 
 ### iOS local network permission
 

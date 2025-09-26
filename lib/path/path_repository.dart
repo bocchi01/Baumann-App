@@ -5,7 +5,20 @@ import '../models/path_module.dart';
 import '../models/posture_path.dart';
 import '../models/session_exercise.dart';
 
-class MockPathRepository {
+abstract class IPathRepository {
+  Future<PosturePath> fetchCurrentUserPath();
+
+  Future<void> markSessionAsComplete(String sessionId);
+
+  Future<Set<String>> getCompletedSessionIds();
+}
+
+class MockPathRepository implements IPathRepository {
+  MockPathRepository();
+
+  final Set<String> _completedSessionIds = <String>{};
+
+  @override
   Future<PosturePath> fetchCurrentUserPath() async {
     await Future.delayed(const Duration(milliseconds: 800));
 
@@ -180,5 +193,15 @@ class MockPathRepository {
         ),
       ],
     );
+  }
+
+  @override
+  Future<void> markSessionAsComplete(String sessionId) async {
+    _completedSessionIds.add(sessionId);
+  }
+
+  @override
+  Future<Set<String>> getCompletedSessionIds() async {
+    return _completedSessionIds;
   }
 }

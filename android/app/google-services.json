@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "465049224153",
+    "project_id": "baumann-app",
+    "storage_bucket": "baumann-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:465049224153:android:6786ff9443355ef4aa4fc8",
+        "android_client_info": {
+          "package_name": "com.example.posture_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBIwFPXSSJCddSn1VgdWlxFL4-SCJD_8uE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

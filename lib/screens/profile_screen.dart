@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/profile_controller.dart';
 import '../models/user_model.dart';
+import '../services/data_uploader_service.dart';
 import '../theme/theme.dart';
 import 'auth_screen.dart';
 import 'paywall_screen.dart';
@@ -54,6 +55,11 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                     const _MasterclassSection(),
                     const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () => _handleSeedUpload(context),
+                      child: const Text('CARICA DATI DI PROVA'),
+                    ),
+                    const SizedBox(height: 24),
                     _LogoutSection(onLogout: () => _handleLogout(context, ref)),
                   ],
                 ),
@@ -86,6 +92,30 @@ class ProfileScreen extends ConsumerWidget {
           SnackBar(content: Text(message)),
         );
     }
+  }
+}
+
+Future<void> _handleSeedUpload(BuildContext context) async {
+  final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      const SnackBar(content: Text('Caricamento dati di prova in corso...')),
+    );
+
+  try {
+    await DataUploaderService().uploadData();
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(content: Text('Dati di prova caricati con successo.')),
+      );
+  } catch (error, stackTrace) {
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text('Errore nel caricamento: $error')),
+      );
+    debugPrint('Seed upload failed: $error\n$stackTrace');
   }
 }
 

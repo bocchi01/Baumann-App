@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth_repository.dart';
+import '../auth/firebase_auth_repository.dart' as firebase_auth;
 import '../models/user_model.dart';
 import '../navigation/app_router.dart';
 import '../screens/main_screen.dart';
@@ -36,7 +37,7 @@ class AuthState {
 }
 
 final Provider<IAuthRepository> authRepositoryProvider =
-    Provider<IAuthRepository>((Ref ref) => MockAuthRepository());
+    Provider<IAuthRepository>((Ref ref) => firebase_auth.FirebaseAuthRepository());
 
 final NotifierProvider<AuthController, AuthState> authControllerProvider =
     NotifierProvider<AuthController, AuthState>(AuthController.new);
