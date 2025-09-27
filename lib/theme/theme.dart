@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 // --------------------------------------------------
 // TEMA UFFICIALE DELL'APP ISTITUTO BAUMANN
@@ -8,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 // --------------------------------------------------
 
 class AppTheme {
+  static const String _fontFamily = 'Montserrat';
+
   // --- PALETTE COLORI UFFICIALE ---
 
   /// Colore primario: il blu istituzionale estratto dal banner ufficiale.
@@ -39,6 +40,7 @@ class AppTheme {
       // Impostazioni colori principali
       primaryColor: baumannPrimaryBlue,
       scaffoldBackgroundColor: background,
+      fontFamily: _fontFamily,
       colorScheme: const ColorScheme.light(
         primary: baumannPrimaryBlue,
         secondary: baumannSecondaryBlue,
@@ -51,15 +53,35 @@ class AppTheme {
       ),
 
       // Impostazioni Tipografia
-      textTheme: GoogleFonts.montserratTextTheme().copyWith(
-        displayLarge: GoogleFonts.montserrat(
-            fontSize: 28, fontWeight: FontWeight.bold, color: textPrimary),
-        headlineMedium: GoogleFonts.montserrat(
-            fontSize: 22, fontWeight: FontWeight.bold, color: textPrimary),
-        bodyLarge: GoogleFonts.montserrat(fontSize: 16, color: textPrimary),
-        bodyMedium: GoogleFonts.montserrat(fontSize: 14, color: textSecondary),
-        labelLarge: GoogleFonts.montserrat(
-            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: textPrimary,
+        ),
+        headlineMedium: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 22,
+          fontWeight: FontWeight.bold,
+          color: textPrimary,
+        ),
+        bodyLarge: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 16,
+          color: textPrimary,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 14,
+          color: textSecondary,
+        ),
+        labelLarge: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
 
       // Stile per le AppBar
@@ -98,8 +120,11 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12.0),
           ),
           padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
-          textStyle:
-              GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.bold),
+          textStyle: const TextStyle(
+            fontFamily: _fontFamily,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
 
