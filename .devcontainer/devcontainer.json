@@ -11,7 +11,8 @@
     }
   },
   "remoteEnv": {
-    "PATH": "${containerEnv:PATH}:/usr/local/flutter/bin"
+    "PATH": "${containerEnv:PATH}:/usr/local/flutter/bin",
+    "CHROME_EXECUTABLE": "/usr/local/bin/google-chrome"
   },
   "forwardPorts": [9010],
   "remoteUser": "vscode"
