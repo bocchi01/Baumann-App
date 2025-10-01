@@ -62,48 +62,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     setState(() => _currentPage = page);
                   },
                   children: <Widget>[
-                    _QuestionPage(
-                      title: 'Qual è il tuo obiettivo principale?',
-                      description:
-                          'Aiutaci a personalizzare il tuo percorso posturale.',
-                      options: const <String>[
-                        'Ridurre dolori e tensioni',
-                        'Migliorare la postura quotidiana',
-                        'Rafforzare core e stabilità',
-                      ],
-                      selectedValue: state.goal,
-                      onSelect: (String value) => ref
-                          .read(onboardingControllerProvider.notifier)
-                          .selectGoal(value),
-                    ),
-                    _QuestionPage(
-                      title: 'Come descriveresti il tuo stile di vita?',
-                      description:
-                          'Capire il tuo livello di attività ci aiuta ad adattare il ritmo.',
-                      options: const <String>[
-                        'Sedentario (molto tempo seduto)',
-                        'Moderatamente attivo',
-                        'Molto attivo / sportivo',
-                      ],
-                      selectedValue: state.lifestyle,
-                      onSelect: (String value) => ref
-                          .read(onboardingControllerProvider.notifier)
-                          .selectLifestyle(value),
-                    ),
-                    _QuestionPage(
-                      title: 'Quanto tempo puoi dedicare al giorno?',
-                      description:
-                          'Scegli una durata realistica per la tua routine.',
-                      options: const <String>[
-                        '15 minuti',
-                        '30 minuti',
-                        '45+ minuti',
-                      ],
-                      selectedValue: state.timeAvailability,
-                      onSelect: (String value) => ref
-                          .read(onboardingControllerProvider.notifier)
-                          .selectTimeAvailability(value),
-                    ),
+                    _GoalPage(selectedValue: state.goal),
+                    _LifestylePage(selectedValue: state.lifestyle),
+                    _TimePage(selectedValue: state.time),
                   ],
                 ),
               ),
@@ -134,9 +95,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: state.isSubmitting
-                      ? null
-                      : () => _handleNext(state),
+                  onPressed:
+                      state.isSubmitting ? null : () => _handleNext(state),
                   child: state.isSubmitting
                       ? const SizedBox(
                           width: 20,
@@ -167,8 +127,82 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   }
 }
 
-class _QuestionPage extends StatelessWidget {
-  const _QuestionPage({
+class _GoalPage extends ConsumerWidget {
+  const _GoalPage({required this.selectedValue});
+
+  final String? selectedValue;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    const List<_AnswerOption> options = <_AnswerOption>[
+      _AnswerOption(label: 'Prevenire futuri dolori', value: 'prevenzione'),
+      _AnswerOption(label: 'Alleviare un dolore attuale', value: 'alleviare'),
+      _AnswerOption(
+          label: 'Migliorare la postura generale', value: 'migliorare'),
+    ];
+
+    return _QuestionLayout(
+      title: 'Qual è il tuo obiettivo principale?',
+      description: 'Aiutaci a personalizzare il tuo percorso posturale.',
+      options: options,
+      selectedValue: selectedValue,
+      onSelect: (String value) =>
+          ref.read(onboardingControllerProvider.notifier).setGoal(value),
+    );
+  }
+}
+
+class _LifestylePage extends ConsumerWidget {
+  const _LifestylePage({required this.selectedValue});
+
+  final String? selectedValue;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    const List<_AnswerOption> options = <_AnswerOption>[
+      _AnswerOption(label: 'Prevalentemente sedentario', value: 'sedentario'),
+      _AnswerOption(label: 'Moderatamente attivo', value: 'moderato'),
+      _AnswerOption(label: 'Molto attivo', value: 'attivo'),
+    ];
+
+    return _QuestionLayout(
+      title: 'Come descriveresti il tuo stile di vita?',
+      description:
+          'Capire il tuo livello di attività ci aiuta ad adattare il ritmo.',
+      options: options,
+      selectedValue: selectedValue,
+      onSelect: (String value) =>
+          ref.read(onboardingControllerProvider.notifier).setLifestyle(value),
+    );
+  }
+}
+
+class _TimePage extends ConsumerWidget {
+  const _TimePage({required this.selectedValue});
+
+  final String? selectedValue;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    const List<_AnswerOption> options = <_AnswerOption>[
+      _AnswerOption(label: '15 minuti al giorno', value: '15min'),
+      _AnswerOption(label: '30 minuti al giorno', value: '30min'),
+      _AnswerOption(label: '45+ minuti al giorno', value: '45min'),
+    ];
+
+    return _QuestionLayout(
+      title: 'Quanto tempo puoi dedicare al giorno?',
+      description: 'Scegli una durata realistica per la tua routine.',
+      options: options,
+      selectedValue: selectedValue,
+      onSelect: (String value) =>
+          ref.read(onboardingControllerProvider.notifier).setTime(value),
+    );
+  }
+}
+
+class _QuestionLayout extends StatelessWidget {
+  const _QuestionLayout({
     required this.title,
     required this.description,
     required this.options,
@@ -178,7 +212,7 @@ class _QuestionPage extends StatelessWidget {
 
   final String title;
   final String description;
-  final List<String> options;
+  final List<_AnswerOption> options;
   final String? selectedValue;
   final ValueChanged<String> onSelect;
 
@@ -208,12 +242,12 @@ class _QuestionPage extends StatelessWidget {
             itemCount: options.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (BuildContext context, int index) {
-              final String option = options[index];
-              final bool isSelected = option == selectedValue;
+              final _AnswerOption option = options[index];
+              final bool isSelected = option.value == selectedValue;
               return _OptionTile(
-                label: option,
+                label: option.label,
                 isSelected: isSelected,
-                onTap: () => onSelect(option),
+                onTap: () => onSelect(option.value),
               );
             },
           ),
@@ -221,6 +255,13 @@ class _QuestionPage extends StatelessWidget {
       ],
     );
   }
+}
+
+class _AnswerOption {
+  const _AnswerOption({required this.label, required this.value});
+
+  final String label;
+  final String value;
 }
 
 class _OptionTile extends StatelessWidget {
@@ -247,9 +288,8 @@ class _OptionTile extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected
-                ? colorScheme.primary
-                : colorScheme.outlineVariant,
+            color:
+                isSelected ? colorScheme.primary : colorScheme.outlineVariant,
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
@@ -270,8 +310,7 @@ class _OptionTile extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle,
-                  color: colorScheme.primary, size: 24),
+              Icon(Icons.check_circle, color: colorScheme.primary, size: 24),
           ],
         ),
       ),

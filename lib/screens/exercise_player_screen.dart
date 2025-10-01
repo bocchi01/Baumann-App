@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
@@ -118,36 +120,31 @@ class ExercisePlayerScreen extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    _VideoPane(
-                      state: state,
-                      isLoadingVideo: isLoadingVideo,
-                      isResting: isResting,
-                      nextExercise: nextExercise,
-                      onResume: () {
-                        controller.play();
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    _ExerciseInfoSection(
-                      state: state,
-                      session: session,
-                      countdownLabel: countdownLabel,
-                      countdownValue: countdownValue,
-                      exercise: currentExercise,
-                    ),
-                    const SizedBox(height: 24),
-                    _ControlBar(
-                      controller: controller,
-                      state: state,
-                      isDisabled: isControlsDisabled,
-                    ),
-                  ],
-                ),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 350),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+                child: isResting
+                    ? _RestView(
+                        key: const ValueKey<String>('rest-view'),
+                        controller: controller,
+                        state: state,
+                        nextExercise: nextExercise,
+                      )
+                    : _ExerciseView(
+                        key: const ValueKey<String>('exercise-view'),
+                        controller: controller,
+                        state: state,
+                        session: session,
+                        currentExercise: currentExercise,
+                        countdownLabel: countdownLabel,
+                        countdownValue: countdownValue,
+                        isLoadingVideo: isLoadingVideo,
+                        exerciseProgress: exerciseProgress,
+                        isControlsDisabled: isControlsDisabled,
+                        canSkip: state.hasNextExercise,
+                      ),
               ),
             ),
           ],
@@ -185,25 +182,243 @@ class ExercisePlayerScreen extends ConsumerWidget {
   }
 }
 
+class _ExerciseView extends StatelessWidget {
+  const _ExerciseView({
+    super.key,
+    required this.controller,
+    required this.state,
+    required this.session,
+    required this.currentExercise,
+    required this.countdownLabel,
+    required this.countdownValue,
+    required this.isLoadingVideo,
+    required this.exerciseProgress,
+    required this.isControlsDisabled,
+    required this.canSkip,
+  });
+
+  final ExercisePlayerController controller;
+  final ExercisePlayerState state;
+  final DailySession session;
+  final Exercise? currentExercise;
+  final String countdownLabel;
+  final String countdownValue;
+  final bool isLoadingVideo;
+  final double exerciseProgress;
+  final bool isControlsDisabled;
+  final bool canSkip;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _VideoPane(
+            state: state,
+            isLoadingVideo: isLoadingVideo,
+            exerciseProgress: exerciseProgress,
+            onTogglePlay: () {
+              if (state.isPlaying) {
+                unawaited(controller.pause());
+              } else {
+                unawaited(controller.play());
+              }
+            },
+            onSkip:
+                canSkip ? () => unawaited(controller.goToNextExercise()) : null,
+            canSkip: canSkip,
+          ),
+          const SizedBox(height: 24),
+          _ExerciseInfoSection(
+            state: state,
+            session: session,
+            countdownLabel: countdownLabel,
+            countdownValue: countdownValue,
+            exercise: currentExercise,
+          ),
+          const SizedBox(height: 24),
+          _ControlBar(
+            controller: controller,
+            state: state,
+            isDisabled: isControlsDisabled,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RestView extends StatelessWidget {
+  const _RestView({
+    super.key,
+    required this.controller,
+    required this.state,
+    this.nextExercise,
+  });
+
+  final ExercisePlayerController controller;
+  final ExercisePlayerState state;
+  final Exercise? nextExercise;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+    final String formattedTime = _formatTime(state.countdownValue);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            colors: <Color>[
+              AppTheme.baumannPrimaryBlue.withValues(alpha: 0.9),
+              AppTheme.baumannSecondaryBlue.withValues(alpha: 0.85),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Text(
+                  'Recupera',
+                  style: textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'PROSSIMO ESERCIZIO',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: Colors.white70,
+                    letterSpacing: 2.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (nextExercise != null) ...<Widget>[
+                  Text(
+                    nextExercise!.name,
+                    textAlign: TextAlign.center,
+                    style: textTheme.headlineSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  if (nextExercise!.description.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 8),
+                    Text(
+                      nextExercise!.description,
+                      textAlign: TextAlign.center,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ] else
+                  Text(
+                    'Tieni il ritmo!',
+                    style: textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                const SizedBox(height: 32),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder:
+                      (Widget child, Animation<double> animation) {
+                    final Animation<Offset> offsetAnimation = Tween<Offset>(
+                      begin: const Offset(0, 0.4),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOut,
+                      ),
+                    );
+                    return ClipRect(
+                      child: SlideTransition(
+                        position: offsetAnimation,
+                        child: FadeTransition(
+                          opacity: animation,
+                          child: child,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    formattedTime,
+                    key: ValueKey<int>(state.countdownValue),
+                    style: textTheme.displayLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: AppTheme.baumannPrimaryBlue,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  onPressed: state.hasNextExercise
+                      ? () => unawaited(controller.skipRest())
+                      : null,
+                  icon: const Icon(Icons.fast_forward_rounded),
+                  label: const Text('Salta il riposo'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static String _formatTime(int seconds) {
+    final int minutes = seconds ~/ 60;
+    final int remainingSeconds = seconds % 60;
+    return '${minutes.toString()}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+}
+
 class _VideoPane extends StatelessWidget {
   const _VideoPane({
     required this.state,
     required this.isLoadingVideo,
-    required this.isResting,
-    required this.nextExercise,
-    required this.onResume,
+    required this.exerciseProgress,
+    required this.onTogglePlay,
+    required this.onSkip,
+    required this.canSkip,
   });
 
   final ExercisePlayerState state;
   final bool isLoadingVideo;
-  final bool isResting;
-  final Exercise? nextExercise;
-  final VoidCallback onResume;
+  final double exerciseProgress;
+  final VoidCallback onTogglePlay;
+  final VoidCallback? onSkip;
+  final bool canSkip;
+
+  bool get _isPlaying =>
+      state.isPlaying && state.phase == ExercisePlayerPhase.playing;
 
   @override
   Widget build(BuildContext context) {
-    final ExercisePlayerPhase phase = state.phase;
-
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: ClipRRect(
@@ -215,13 +430,53 @@ class _VideoPane extends StatelessWidget {
               _VideoPlayerWidget(controller: state.videoController!)
             else
               _VideoPlaceholder(isLoading: isLoadingVideo),
-            if (phase == ExercisePlayerPhase.paused && !isResting)
-              _PausedOverlay(onPlay: onResume),
-            if (isResting)
-              _RestOverlay(
-                secondsRemaining: state.countdownValue,
-                nextExercise: nextExercise,
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      Colors.black.withValues(alpha: 0.25),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.35),
+                    ],
+                  ),
+                ),
               ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: isLoadingVideo,
+                child: Center(
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 24,
+                    children: <Widget>[
+                      _CircleControlButton(
+                        icon: _isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                        onPressed: onTogglePlay,
+                        size: 68,
+                      ),
+                      _CircleControlButton(
+                        icon: Icons.skip_next_rounded,
+                        onPressed: canSkip ? onSkip : null,
+                        size: 60,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: _VideoProgressBar(progress: exerciseProgress),
+            ),
             if (isLoadingVideo) const _LoadingOverlay(),
           ],
         ),
@@ -265,9 +520,9 @@ class _VideoPlaceholder extends StatelessWidget {
       alignment: Alignment.center,
       child: isLoading
           ? const CircularProgressIndicator()
-      : const Column(
+          : const Column(
               mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
+              children: <Widget>[
                 Icon(Icons.play_circle_outline,
                     size: 64, color: Colors.white70),
                 SizedBox(height: 12),
@@ -281,85 +536,46 @@ class _VideoPlaceholder extends StatelessWidget {
   }
 }
 
-class _PausedOverlay extends StatelessWidget {
-  const _PausedOverlay({required this.onPlay});
+class _CircleControlButton extends StatelessWidget {
+  const _CircleControlButton({
+    required this.icon,
+    required this.size,
+    this.onPressed,
+  });
 
-  final VoidCallback onPlay;
+  final IconData icon;
+  final double size;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black.withValues(alpha: 0.45),
-      alignment: Alignment.center,
+    final bool enabled = onPressed != null;
+    return Material(
+      color: Colors.black.withValues(alpha: enabled ? 0.45 : 0.2),
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
       child: IconButton(
-        iconSize: 72,
-        color: Colors.white,
-        onPressed: onPlay,
-        icon: const Icon(Icons.play_arrow_rounded),
+        icon: Icon(icon, color: Colors.white),
+        iconSize: size,
+        padding: const EdgeInsets.all(12),
+        onPressed: onPressed,
       ),
     );
   }
 }
 
-class _RestOverlay extends StatelessWidget {
-  const _RestOverlay({
-    required this.secondsRemaining,
-    required this.nextExercise,
-  });
+class _VideoProgressBar extends StatelessWidget {
+  const _VideoProgressBar({required this.progress});
 
-  final int secondsRemaining;
-  final Exercise? nextExercise;
+  final double progress;
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
-    return Container(
-      color: Colors.black.withValues(alpha: 0.65),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            'Recupera',
-            style: textTheme.displayMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Prossimo esercizio tra',
-            style: textTheme.titleMedium?.copyWith(color: Colors.white70),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${secondsRemaining}s',
-            style: textTheme.displayLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 24),
-          if (nextExercise != null) ...<Widget>[
-            Text(
-              nextExercise!.name,
-              style: textTheme.headlineSmall?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              nextExercise!.description,
-              style: textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.85),
-              ),
-            ),
-          ],
-        ],
-      ),
+    return LinearProgressIndicator(
+      value: progress.clamp(0.0, 1.0),
+      minHeight: 8,
+      backgroundColor: Colors.black.withValues(alpha: 0.2),
+      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
     );
   }
 }
@@ -504,7 +720,7 @@ class _ControlBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-  const Color buttonColor = AppTheme.baumannPrimaryBlue;
+    const Color buttonColor = AppTheme.baumannPrimaryBlue;
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),

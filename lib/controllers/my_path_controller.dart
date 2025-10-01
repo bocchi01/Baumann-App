@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/daily_session.dart';
@@ -31,8 +32,7 @@ class MyPathState {
     return MyPathState(
       isLoading: isLoading ?? this.isLoading,
       path: clearPath ? null : path ?? this.path,
-      completedSessionIds:
-          completedSessionIds ?? this.completedSessionIds,
+      completedSessionIds: completedSessionIds ?? this.completedSessionIds,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }
@@ -51,10 +51,15 @@ class MyPathController extends Notifier<MyPathState> {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
-    final IPathRepository repository = ref.read(pathRepositoryProvider);
-      final PosturePath path = await repository.fetchCurrentUserPath();
-    final Set<String> completedSessionIds =
-      await repository.getCompletedSessionIds();
+      final IPathRepository repository = ref.read(pathRepositoryProvider);
+      final String? userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        throw Exception('Utente non autenticato.');
+      }
+
+      final PosturePath path = await repository.fetchUserPath(userId);
+      final Set<String> completedSessionIds =
+          await repository.getCompletedSessionIds();
 
       state = state.copyWith(
         isLoading: false,

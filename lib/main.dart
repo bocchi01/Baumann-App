@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'firebase_options.dart';
 import 'navigation/app_router.dart';
-import 'screens/auth_screen.dart';
+import 'screens/auth_wrapper.dart';
 import 'theme/theme.dart';
 import 'utils/network_probe.dart';
 
@@ -49,7 +49,7 @@ class PostureApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.themeData,
       home: firebaseInit.when(
-        data: (_) => const AuthScreen(),
+        data: (_) => const AuthWrapper(),
         loading: () => const _FirebaseLoadingScreen(),
         error: (Object error, StackTrace stackTrace) => _FirebaseErrorScreen(
           error: error,

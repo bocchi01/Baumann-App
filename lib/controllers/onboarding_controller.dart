@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,24 +12,23 @@ class OnboardingState {
   const OnboardingState({
     this.goal,
     this.lifestyle,
-    this.timeAvailability,
+    this.time,
     this.isSubmitting = false,
     this.errorMessage,
   });
 
   final String? goal;
   final String? lifestyle;
-  final String? timeAvailability;
+  final String? time;
   final bool isSubmitting;
   final String? errorMessage;
 
-  bool get isComplete =>
-      goal != null && lifestyle != null && timeAvailability != null;
+  bool get isComplete => goal != null && lifestyle != null && time != null;
 
   OnboardingState copyWith({
     String? goal,
     String? lifestyle,
-    String? timeAvailability,
+    String? time,
     bool? isSubmitting,
     String? errorMessage,
     bool clearError = false,
@@ -35,7 +36,7 @@ class OnboardingState {
     return OnboardingState(
       goal: goal ?? this.goal,
       lifestyle: lifestyle ?? this.lifestyle,
-      timeAvailability: timeAvailability ?? this.timeAvailability,
+      time: time ?? this.time,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
@@ -52,16 +53,16 @@ class OnboardingController extends Notifier<OnboardingState> {
   @override
   OnboardingState build() => const OnboardingState();
 
-  void selectGoal(String goal) {
-    state = state.copyWith(goal: goal, clearError: true);
+  void setGoal(String value) {
+    state = state.copyWith(goal: value, clearError: true);
   }
 
-  void selectLifestyle(String lifestyle) {
-    state = state.copyWith(lifestyle: lifestyle, clearError: true);
+  void setLifestyle(String value) {
+    state = state.copyWith(lifestyle: value, clearError: true);
   }
 
-  void selectTimeAvailability(String availability) {
-    state = state.copyWith(timeAvailability: availability, clearError: true);
+  void setTime(String value) {
+    state = state.copyWith(time: value, clearError: true);
   }
 
   Future<void> submitOnboarding() async {
@@ -75,10 +76,55 @@ class OnboardingController extends Notifier<OnboardingState> {
     state = state.copyWith(isSubmitting: true, clearError: true);
 
     try {
-      await Future<void>.delayed(const Duration(seconds: 1));
-    } finally {
-      state = state.copyWith(isSubmitting: false);
+      final String? userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) {
+        throw Exception(
+            'Utente non autenticato. Effettua di nuovo l\'accesso.');
+      }
+
+      final String? goal = state.goal;
+      final String? lifestyle = state.lifestyle;
+      final String? time = state.time;
+
+      String assignedPathId;
+      if (goal == 'prevenzione' && lifestyle == 'moderato') {
+        assignedPathId = 'percorso_prevenzione_01';
+      } else {
+        assignedPathId = 'percorso_ufficio_01';
+      }
+
+      debugPrint('Decisione finale: Assegnato il percorso ID: $assignedPathId');
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      await firestore.collection('users').doc(userId).set(
+        <String, dynamic>{
+          'onboardingAnswers': <String, dynamic>{
+            'goal': goal,
+            'lifestyle': lifestyle,
+            'time': time,
+          },
+          'assignedPathId': assignedPathId,
+          'onboardingCompletedAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    } on FirebaseException catch (error) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: error.code == 'permission-denied'
+            ? 'Non riusciamo a salvare i tuoi dati. Attendi qualche minuto e riprova. Se il problema persiste contatta il supporto.'
+            : (error.message ??
+                'Si è verificato un errore imprevisto. Riprova più tardi.'),
+      );
+      return;
+    } catch (error) {
+      state = state.copyWith(
+        isSubmitting: false,
+        errorMessage: error.toString(),
+      );
+      return;
     }
+
+    state = state.copyWith(isSubmitting: false);
 
     final NavigatorState? navigator = appNavigatorKey.currentState;
     navigator?.pushAndRemoveUntil(

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_haptic_feedback/flutter_haptic_feedback.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
@@ -129,7 +130,7 @@ final AutoDisposeNotifierProviderFamily<ExercisePlayerController,
 
 class ExercisePlayerController
     extends AutoDisposeFamilyNotifier<ExercisePlayerState, DailySession> {
-  static const int _restDurationInSeconds = 8;
+  static const int _restDurationInSeconds = 10;
 
   Timer? _ticker;
   bool _initialized = false;
@@ -280,6 +281,13 @@ class ExercisePlayerController
       final int nextValue = (state.countdownValue - 1).clamp(0, 9999);
       state = state.copyWith(countdownValue: nextValue);
 
+      if (state.phase == ExercisePlayerPhase.resting &&
+          nextValue > 0 &&
+          nextValue <= 3) {
+        _emitHaptic(
+            () => FlutterHapticFeedback.impact(ImpactFeedbackStyle.light, 0.6));
+      }
+
       if (nextValue <= 0) {
         _ticker?.cancel();
         if (state.phase == ExercisePlayerPhase.resting) {
@@ -299,6 +307,10 @@ class ExercisePlayerController
 
     await _pauseVideo();
 
+    _emitHaptic(
+      () => FlutterHapticFeedback.impact(ImpactFeedbackStyle.medium, 1),
+    );
+
     state = state.copyWith(
       phase: ExercisePlayerPhase.resting,
       isPlaying: true,
@@ -306,6 +318,16 @@ class ExercisePlayerController
     );
 
     _startTicker();
+  }
+
+  Future<void> skipRest() async {
+    if (state.phase != ExercisePlayerPhase.resting) {
+      return;
+    }
+
+    _ticker?.cancel();
+    state = state.copyWith(isPlaying: false, countdownValue: 0);
+    await goToNextExercise(fromRest: true);
   }
 
   Future<void> _finishSession() async {
@@ -335,6 +357,14 @@ class ExercisePlayerController
     final VideoPlayerController? controller = state.videoController;
     if (controller != null) {
       unawaited(controller.dispose());
+    }
+  }
+
+  void _emitHaptic(Future<void> Function() feedback) {
+    try {
+      unawaited(feedback());
+    } catch (_) {
+      // Haptic feedback is best-effort; ignore platform errors.
     }
   }
 

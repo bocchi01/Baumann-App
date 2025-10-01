@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,7 +38,8 @@ class AuthState {
 }
 
 final Provider<IAuthRepository> authRepositoryProvider =
-    Provider<IAuthRepository>((Ref ref) => firebase_auth.FirebaseAuthRepository());
+    Provider<IAuthRepository>(
+        (Ref ref) => firebase_auth.FirebaseAuthRepository());
 
 final NotifierProvider<AuthController, AuthState> authControllerProvider =
     NotifierProvider<AuthController, AuthState>(AuthController.new);
@@ -72,6 +74,17 @@ class AuthController extends Notifier<AuthState> {
       final UserModel user = await ref
           .read(authRepositoryProvider)
           .registerWithEmail(email, password);
+
+      final FirebaseFirestore firestore = FirebaseFirestore.instance;
+      await firestore.collection('users').doc(user.id).set(
+        <String, dynamic>{
+          'uid': user.id,
+          'email': user.email,
+          'createdAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
       state = state.copyWith(isLoading: false, user: user, clearError: true);
       _navigateToOnboarding();
     } catch (error) {

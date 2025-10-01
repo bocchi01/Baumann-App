@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/user_model.dart';
@@ -27,10 +28,24 @@ class FirebaseAuthRepository implements IAuthRepository {
   @override
   Future<UserModel> registerWithEmail(String email, String password) async {
     try {
-      final UserCredential credential = await _auth.createUserWithEmailAndPassword(
+      final UserCredential credential =
+          await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      final User? firebaseUser = credential.user;
+      if (firebaseUser != null) {
+        final FirebaseFirestore firestore = FirebaseFirestore.instance;
+        await firestore
+            .collection('users')
+            .doc(firebaseUser.uid)
+            .set(<String, dynamic>{
+          'email': email,
+          'name': 'Nuovo Utente',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
       return _userFromFirebaseUser(credential.user!, isNewUser: true);
     } on FirebaseAuthException catch (e) {
       throw Exception(_getErrorMessage(e.code));
@@ -45,7 +60,7 @@ class FirebaseAuthRepository implements IAuthRepository {
 
   @override
   Future<UserModel> signInWithApple() async {
-    // TODO: Implement Apple Sign-In with sign_in_with_apple package  
+    // TODO: Implement Apple Sign-In with sign_in_with_apple package
     throw UnimplementedError('Apple Sign-In sarà implementato prossimamente');
   }
 
@@ -77,7 +92,7 @@ class FirebaseAuthRepository implements IAuthRepository {
     if (email.isEmpty) return 'Utente';
     final String username = email.split('@').first;
     // Capitalize first letter if possible
-    return username.isNotEmpty 
+    return username.isNotEmpty
         ? '${username[0].toUpperCase()}${username.substring(1)}'
         : 'Utente';
   }

@@ -85,6 +85,11 @@ class _DashboardContent extends StatelessWidget {
           onStart: () => _startSession(context, state.todaySession!),
         ),
         const SizedBox(height: 24),
+        _StatisticsOverview(
+          completedSessions: state.completedSessionsCount,
+          currentStreak: state.currentStreak,
+        ),
+        const SizedBox(height: 24),
         _WeeklyProgressWidget(
           completedDays: state.completedDays,
           currentWeek: state.currentWeek,
@@ -267,6 +272,102 @@ class _WeeklyProgressWidget extends StatelessWidget {
           }),
         ),
       ],
+    );
+  }
+}
+
+class _StatisticsOverview extends StatelessWidget {
+  const _StatisticsOverview({
+    required this.completedSessions,
+    required this.currentStreak,
+  });
+
+  final int completedSessions;
+  final int currentStreak;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        Expanded(
+          child: _StatCard(
+            icon: Icons.check_circle_outline,
+            value: completedSessions,
+            label: 'Sessioni Completate',
+            iconColor: AppTheme.baumannPrimaryBlue,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _StatCard(
+            icon: Icons.local_fire_department_outlined,
+            value: currentStreak,
+            label: 'Giorni di Striscia',
+            iconColor: AppTheme.baumannAccentOrange,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.icon,
+    required this.value,
+    required this.label,
+    required this.iconColor,
+  });
+
+  final IconData icon;
+  final int value;
+  final String label;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Container(
+              height: 48,
+              width: 48,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: iconColor, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    '$value',
+                    style: textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: Colors.black.withValues(alpha: 0.65),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -6,11 +6,13 @@ import '../models/posture_path.dart';
 import '../models/session_exercise.dart';
 
 abstract class IPathRepository {
-  Future<PosturePath> fetchCurrentUserPath();
+  Future<PosturePath> fetchUserPath(String userId);
 
   Future<void> markSessionAsComplete(String sessionId);
 
   Future<Set<String>> getCompletedSessionIds();
+
+  Future<Map<String, dynamic>> getUserProgressData();
 }
 
 class MockPathRepository implements IPathRepository {
@@ -19,7 +21,7 @@ class MockPathRepository implements IPathRepository {
   final Set<String> _completedSessionIds = <String>{};
 
   @override
-  Future<PosturePath> fetchCurrentUserPath() async {
+  Future<PosturePath> fetchUserPath(String userId) async {
     await Future.delayed(const Duration(milliseconds: 800));
 
     const List<SessionExercise> mobilityFlowExercises = <SessionExercise>[
@@ -203,5 +205,12 @@ class MockPathRepository implements IPathRepository {
   @override
   Future<Set<String>> getCompletedSessionIds() async {
     return _completedSessionIds;
+  }
+
+  @override
+  Future<Map<String, dynamic>> getUserProgressData() async {
+    return <String, dynamic>{
+      'completedSessions': _completedSessionIds.toList(),
+    };
   }
 }

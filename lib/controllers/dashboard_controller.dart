@@ -16,6 +16,8 @@ class DashboardState {
     this.todaySession,
     this.currentWeek = 1,
     this.completedDays = const <int>{},
+    this.completedSessionsCount = 0,
+    this.currentStreak = 0,
     this.errorMessage,
   });
 
@@ -25,6 +27,8 @@ class DashboardState {
   final DailySession? todaySession;
   final int currentWeek;
   final Set<int> completedDays;
+  final int completedSessionsCount;
+  final int currentStreak;
   final String? errorMessage;
 
   DashboardState copyWith({
@@ -37,6 +41,8 @@ class DashboardState {
     bool clearSession = false,
     int? currentWeek,
     Set<int>? completedDays,
+    int? completedSessionsCount,
+    int? currentStreak,
     String? errorMessage,
     bool clearError = false,
   }) {
@@ -47,6 +53,9 @@ class DashboardState {
       todaySession: clearSession ? null : todaySession ?? this.todaySession,
       currentWeek: currentWeek ?? this.currentWeek,
       completedDays: Set<int>.unmodifiable(completedDays ?? this.completedDays),
+      completedSessionsCount:
+          completedSessionsCount ?? this.completedSessionsCount,
+      currentStreak: currentStreak ?? this.currentStreak,
       errorMessage: clearError ? null : errorMessage ?? this.errorMessage,
     );
   }
@@ -69,18 +78,22 @@ class DashboardController extends Notifier<DashboardState> {
 
     try {
       final IAuthRepository authRepository = ref.read(authRepositoryProvider);
-    final IPathRepository pathRepository =
-      ref.read(pathRepositoryProvider);
+      final IPathRepository pathRepository = ref.read(pathRepositoryProvider);
 
       final UserModel? user = await authRepository.getCurrentUser();
       if (user == null) {
         throw Exception('Utente non autenticato.');
       }
 
-      final PosturePath path = await pathRepository.fetchCurrentUserPath();
+      final PosturePath path = await pathRepository.fetchUserPath(user.id);
+      final Map<String, dynamic> progressData =
+          await pathRepository.getUserProgressData();
       final DailySession? todaySession = _selectTodaySession(path);
       final int currentWeek = _determineWeek(path, todaySession);
       final Set<int> completedDays = _resolveCompletedDays(todaySession);
+      final int completedSessionsCount =
+          _resolveCompletedSessionsCount(progressData);
+      final int currentStreak = _calculateCurrentStreak(progressData);
 
       state = state.copyWith(
         isLoading: false,
@@ -89,6 +102,8 @@ class DashboardController extends Notifier<DashboardState> {
         todaySession: todaySession,
         currentWeek: currentWeek,
         completedDays: completedDays,
+        completedSessionsCount: completedSessionsCount,
+        currentStreak: currentStreak,
         clearError: true,
       );
     } catch (error) {
@@ -148,6 +163,22 @@ class DashboardController extends Notifier<DashboardState> {
     return Set<int>.unmodifiable(<int>{
       for (int day = 1; day < effectiveDay; day++) day,
     });
+  }
+
+  int _resolveCompletedSessionsCount(Map<String, dynamic> progressData) {
+    final dynamic completed = progressData['completedSessions'];
+    if (completed is Iterable) {
+      return completed.length;
+    }
+    return 0;
+  }
+
+  int _calculateCurrentStreak(Map<String, dynamic> progressData) {
+    // Placeholder logic until completion dates are saved.
+    if ((progressData['completedSessions'] as Iterable?)?.isEmpty ?? true) {
+      return 0;
+    }
+    return 3;
   }
 
   String _mapError(Object error) {
