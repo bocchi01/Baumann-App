@@ -4,7 +4,7 @@ set -euo pipefail
 # Aggiorna i pacchetti e installa le dipendenze necessarie
 if command -v apt-get >/dev/null 2>&1; then
 	sudo apt-get update
-	sudo apt-get install -y git unzip xz-utils clang cmake ninja-build pkg-config libgtk-3-dev wget curl gnupg ca-certificates
+	sudo apt-get install -y git git-lfs unzip xz-utils clang cmake ninja-build pkg-config libgtk-3-dev wget curl gnupg ca-certificates
 
 	# Installa Google Chrome dal repository ufficiale, se non già presente
 		if ! command -v google-chrome >/dev/null 2>&1; then
@@ -17,8 +17,8 @@ if command -v apt-get >/dev/null 2>&1; then
 		sudo apt-get install -y google-chrome-stable
 	fi
 elif command -v apk >/dev/null 2>&1; then
-	sudo apk update
-	sudo apk add --no-cache bash curl git unzip xz tar clang cmake ninja pkgconf gtk+3.0-dev gcompat libstdc++ chromium
+		sudo apk update
+		sudo apk add --no-cache bash curl git git-lfs unzip xz tar clang cmake ninja pkgconf gtk+3.0-dev gcompat libstdc++ chromium
 else
 	echo "Gestore pacchetti non supportato. Installare manualmente le dipendenze richieste." >&2
 	exit 1
@@ -50,6 +50,11 @@ if [ -n "${HOME:-}" ] && [ ! -d "${HOME}" ]; then
 fi
 export PATH="$PATH:/usr/local/flutter/bin"
 export HOME="${USER_HOME}"
+
+# Configura Git LFS se disponibile
+if command -v git-lfs >/dev/null 2>&1; then
+	git lfs install --skip-repo
+fi
 
 # Determina il percorso del browser e crea un alias stabile
 CHROME_BIN=""
