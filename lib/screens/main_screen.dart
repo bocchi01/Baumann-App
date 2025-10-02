@@ -1,67 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
+import '../common_widgets/week_calendar_appbar.dart';
+import '../controllers/profile_controller.dart';
+import '../models/user_model.dart';
 import '../theme/theme.dart';
+import 'activity_screen.dart';
+import 'community_screen.dart';
 import 'dashboard_screen.dart';
 import 'my_path_screen.dart';
-import 'profile_screen.dart';
+import 'settings_screen.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends ConsumerState<MainScreen> {
   int _selectedIndex = 0;
+  DateTime _selectedDay = DateTime.now();
 
   late final List<Widget> _screens = <Widget>[
     const DashboardScreen(),
     const MyPathScreen(),
-    const ProfileScreen(),
+    const ActivityScreen(),
+    const CommunityScreen(),
   ];
 
-  static const List<_MainShellTabConfig> _tabConfig = <_MainShellTabConfig>[
-    _MainShellTabConfig(
-      title: 'Dashboard',
-      subtitle: 'Monitora i tuoi progressi quotidiani.',
-      heroIcon: Icons.dashboard_customize_rounded,
-      primaryActionIcon: Icons.notifications_outlined,
-      accentColor: AppTheme.baumannAccentOrange,
-    ),
-    _MainShellTabConfig(
-      title: 'Percorso',
-      subtitle: 'Segui il programma creato per te.',
-      heroIcon: Icons.alt_route_rounded,
-      primaryActionIcon: Icons.flag_outlined,
-      accentColor: AppTheme.baumannPrimaryBlue,
-    ),
-    _MainShellTabConfig(
-      title: 'Profilo',
-      subtitle: 'Gestisci impostazioni e preferenze.',
-      heroIcon: Icons.person_pin_circle_rounded,
-      primaryActionIcon: Icons.settings_outlined,
-      accentColor: AppTheme.baumannSecondaryBlue,
-    ),
-  ];
+  // TODO: collegare questi dati con il piano reale dell'utente quando sarà disponibile.
+  final Set<int> _plannedWorkoutWeekdays = <int>{1, 3, 5};
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) {
       return;
     }
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
+  }
+
+  void _onDaySelected(DateTime day) {
+    setState(() => _selectedDay = day);
+  }
+
+  void _openSettings() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const SettingsScreen(),
+      ),
+    );
+  }
+
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('$feature sarà presto disponibile!'),
+        ),
+      );
   }
 
   @override
   Widget build(BuildContext context) {
-    final _MainShellTabConfig activeConfig = _tabConfig[_selectedIndex];
+    final ProfileState profileState = ref.watch(profileControllerProvider);
+    final String initials = _resolveInitials(profileState.user);
+
     return Scaffold(
       extendBody: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: _MainShellAppBar(config: activeConfig),
+      appBar: WeekCalendarAppBar(
+        initialDate: _selectedDay,
+        onDaySelected: _onDaySelected,
+        onAvatarTap: _openSettings,
+        onNotificationTap: () => _showComingSoon('Notifiche'),
+        avatarInitials: initials,
+        weekdayWithWorkout: _plannedWorkoutWeekdays,
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _screens,
@@ -99,7 +115,7 @@ class _MainScreenState extends State<MainScreen> {
                 tabBackgroundColor:
                     AppTheme.baumannPrimaryBlue.withValues(alpha: 0.12),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -110,11 +126,15 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   GButton(
                     icon: Icons.route_outlined,
-                    text: 'Il Mio Percorso',
+                    text: 'Il mio percorso',
                   ),
                   GButton(
-                    icon: Icons.person_outline,
-                    text: 'Profilo',
+                    icon: Icons.bolt_outlined,
+                    text: 'Attività',
+                  ),
+                  GButton(
+                    icon: Icons.groups_outlined,
+                    text: 'Community',
                   ),
                 ],
               ),
@@ -124,191 +144,35 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
-}
 
-class _MainShellAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _MainShellAppBar({required this.config});
+  String _resolveInitials(UserModel? user) {
+    final String? displayName = user?.name ?? user?.email;
+    if (displayName == null || displayName.trim().isEmpty) {
+      return 'ME';
+    }
 
-  final _MainShellTabConfig config;
+    final List<String> parts = displayName
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((String part) => part.isNotEmpty)
+        .toList();
 
-  @override
-  Size get preferredSize => const Size.fromHeight(112);
+    if (parts.isEmpty) {
+      return 'ME';
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-        child: Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 24,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            child: Row(
-              children: <Widget>[
-                _SoftIconBadge(
-                  icon: config.heroIcon,
-                  backgroundColor: config.accentColor.withValues(alpha: 0.12),
-                  iconColor: config.accentColor,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        config.title,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        config.subtitle,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.64),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                _SoftIconButton(
-                  icon: Icons.search,
-                  semanticLabel: 'Cerca',
-                  onPressed: () {},
-                ),
-                const SizedBox(width: 8),
-                _SoftIconButton(
-                  icon: config.primaryActionIcon,
-                  semanticLabel: 'Azioni rapide',
-                  badge:
-                      config.primaryActionIcon == Icons.notifications_outlined,
-                  onPressed: () {},
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
+    if (parts.length == 1) {
+      final String fragment = parts.first;
+      if (fragment.length == 1) {
+        return fragment.toUpperCase();
+      }
+      final String firstTwo =
+          fragment.substring(0, fragment.length >= 2 ? 2 : 1);
+      return firstTwo.toUpperCase();
+    }
+
+    final String first = parts.first.substring(0, 1);
+    final String last = parts.last.substring(0, 1);
+    return (first + last).toUpperCase();
   }
-}
-
-class _SoftIconBadge extends StatelessWidget {
-  const _SoftIconBadge({
-    required this.icon,
-    required this.backgroundColor,
-    required this.iconColor,
-  });
-
-  final IconData icon;
-  final Color backgroundColor;
-  final Color iconColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 52,
-      height: 52,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Icon(
-        icon,
-        color: iconColor,
-        size: 28,
-      ),
-    );
-  }
-}
-
-class _SoftIconButton extends StatelessWidget {
-  const _SoftIconButton({
-    required this.icon,
-    required this.semanticLabel,
-    required this.onPressed,
-    this.badge = false,
-  });
-
-  final IconData icon;
-  final String semanticLabel;
-  final VoidCallback onPressed;
-  final bool badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return Semantics(
-      button: true,
-      label: semanticLabel,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: <Widget>[
-          Material(
-            color: theme.colorScheme.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: InkWell(
-              onTap: onPressed,
-              borderRadius: BorderRadius.circular(16),
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Icon(
-                  icon,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                  size: 22,
-                ),
-              ),
-            ),
-          ),
-          if (badge)
-            Positioned(
-              right: 2,
-              top: 2,
-              child: Container(
-                width: 9,
-                height: 9,
-                decoration: const BoxDecoration(
-                  color: AppTheme.baumannAccentOrange,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MainShellTabConfig {
-  const _MainShellTabConfig({
-    required this.title,
-    required this.subtitle,
-    required this.heroIcon,
-    required this.primaryActionIcon,
-    required this.accentColor,
-  });
-
-  final String title;
-  final String subtitle;
-  final IconData heroIcon;
-  final IconData primaryActionIcon;
-  final Color accentColor;
 }

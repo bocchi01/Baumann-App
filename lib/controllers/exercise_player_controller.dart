@@ -138,7 +138,8 @@ class ExercisePlayerController
   MockExerciseCatalog get _catalog => ref.read(exerciseCatalogProvider);
 
   @override
-  ExercisePlayerState build(DailySession session) {
+  ExercisePlayerState build(DailySession arg) {
+    final DailySession session = arg;
     ref.onDispose(_disposeResources);
     return ExercisePlayerState.initial(session);
   }

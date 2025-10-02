@@ -99,7 +99,7 @@ class AppTheme {
       ),
 
       // Stile per le Card
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         elevation: 2.0,
         color: Colors.white,
         shadowColor: Colors.black.withValues(alpha: 0.05),
@@ -145,5 +145,30 @@ class AppTheme {
         labelStyle: const TextStyle(color: textSecondary),
       ),
     );
+  }
+}
+
+extension ColorWithValues on Color {
+  /// Replica l'API sperimentale `withValues` delle versioni più recenti di Flutter.
+  /// Permette di aggiornare selettivamente i componenti del colore garantendo
+  /// compatibilità con gli SDK stabili.
+  Color withValues({
+    double? alpha,
+    double? red,
+    double? green,
+    double? blue,
+  }) {
+    int resolveComponent(double? component, int original) {
+      if (component == null) return original;
+      final double normalized = component > 1 ? component / 255 : component;
+      return (normalized.clamp(0.0, 1.0) * 255).round();
+    }
+
+    final int a = resolveComponent(alpha, this.alpha);
+    final int r = resolveComponent(red, this.red);
+    final int g = resolveComponent(green, this.green);
+    final int b = resolveComponent(blue, this.blue);
+
+    return Color.fromARGB(a, r, g, b);
   }
 }
