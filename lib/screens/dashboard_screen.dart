@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../common_widgets/shimmer_widgets.dart';
 import '../controllers/dashboard_controller.dart';
 import '../models/daily_session.dart';
 import '../models/posture_path.dart';
@@ -40,14 +41,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
     final DashboardState state = ref.watch(dashboardControllerProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Il tuo percorso'),
-      ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
+        bottom: false,
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(milliseconds: 300),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
           child: state.isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? const _DashboardLoadingSkeleton()
               : _DashboardContent(state: state),
         ),
       ),
@@ -73,27 +75,45 @@ class _DashboardContent extends StatelessWidget {
       );
     }
 
+    final String userName = (state.user!.name?.trim().isNotEmpty ?? false)
+        ? state.user!.name!
+        : state.user!.email;
+    final String fallbackEmail = state.user!.email.trim().isNotEmpty
+        ? state.user!.email.trim()
+        : 'Utente';
+    final String avatarInitial =
+        (userName.trim().isNotEmpty ? userName.trim()[0] : fallbackEmail[0])
+            .toUpperCase();
+
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
       children: <Widget>[
-        _GreetingWidget(name: state.user!.name ?? state.user!.email),
-        const SizedBox(height: 16),
-        _TodaySessionCard(
+        _OverviewHeader(
+          name: userName,
+          email: state.user!.email,
+          avatarInitial: avatarInitial,
+        ),
+        const SizedBox(height: 20),
+        _WeekCalendarView(
+          currentWeek: state.currentWeek,
+          completedDays: state.completedDays,
+        ),
+        const SizedBox(height: 20),
+        _TodaysWorkoutCard(
           path: state.path!,
           session: state.todaySession!,
-          currentWeek: state.currentWeek,
           onStart: () => _startSession(context, state.todaySession!),
         ),
-        const SizedBox(height: 24),
-        _StatisticsOverview(
+        const SizedBox(height: 20),
+        _WeekOverviewCard(
           completedSessions: state.completedSessionsCount,
           currentStreak: state.currentStreak,
-        ),
-        const SizedBox(height: 24),
-        _WeeklyProgressWidget(
-          completedDays: state.completedDays,
+          totalWeeks: state.path!.durationInWeeks,
           currentWeek: state.currentWeek,
         ),
+        const SizedBox(height: 24),
+        const _PremiumContentHighlight(),
         const SizedBox(height: 24),
         const _TipOfTheDayCard(),
       ],
@@ -109,35 +129,129 @@ class _DashboardContent extends StatelessWidget {
   }
 }
 
-class _GreetingWidget extends StatelessWidget {
-  const _GreetingWidget({required this.name});
-
-  final String name;
+class _DashboardLoadingSkeleton extends StatelessWidget {
+  const _DashboardLoadingSkeleton();
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    final String greeting = _resolveGreeting();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          '$greeting, $name! 👋',
-          style: textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: AppTheme.baumannPrimaryBlue,
-            letterSpacing: -0.2,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Continua il tuo percorso posturale e prenditi cura di te.',
-          style: textTheme.bodyLarge?.copyWith(
-            color: Colors.black.withValues(alpha: 0.6),
-          ),
-        ),
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+      children: const <Widget>[
+        ShimmerBox(height: 120, borderRadius: 26),
+        SizedBox(height: 20),
+        ShimmerBox(height: 110, borderRadius: 26),
+        SizedBox(height: 20),
+        ShimmerBox(height: 240, borderRadius: 30),
+        SizedBox(height: 20),
+        ShimmerBox(height: 160, borderRadius: 24),
+        SizedBox(height: 24),
+        ShimmerBox(height: 200, borderRadius: 24),
+        SizedBox(height: 24),
+        ShimmerBox(height: 140, borderRadius: 20),
       ],
+    );
+  }
+}
+
+class _OverviewHeader extends StatelessWidget {
+  const _OverviewHeader({
+    required this.name,
+    required this.email,
+    required this.avatarInitial,
+  });
+
+  final String name;
+  final String email;
+  final String avatarInitial;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final String greeting = _resolveGreeting();
+    final String todayLabel = _resolveTodayLabel();
+
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 28,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _AvatarBadge(initial: avatarInitial),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  greeting,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$name 👋',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.calendar_month_outlined,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.85),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      todayLabel,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  email,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _SoftActionChip(
+            icon: Icons.auto_graph_rounded,
+            label: 'Report',
+            onTap: () {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  const SnackBar(
+                    content: Text('Report giornaliero presto disponibile'),
+                  ),
+                );
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -147,74 +261,250 @@ class _GreetingWidget extends StatelessWidget {
     if (hour < 18) return 'Buon pomeriggio';
     return 'Buonasera';
   }
+
+  String _resolveTodayLabel() {
+    const List<String> weekdayNames = <String>[
+      'Lunedì',
+      'Martedì',
+      'Mercoledì',
+      'Giovedì',
+      'Venerdì',
+      'Sabato',
+      'Domenica',
+    ];
+    const List<String> monthNames = <String>[
+      'Gennaio',
+      'Febbraio',
+      'Marzo',
+      'Aprile',
+      'Maggio',
+      'Giugno',
+      'Luglio',
+      'Agosto',
+      'Settembre',
+      'Ottobre',
+      'Novembre',
+      'Dicembre',
+    ];
+    final DateTime now = DateTime.now();
+    final String weekday = weekdayNames[now.weekday - 1];
+    final String month = monthNames[now.month - 1];
+    return '$weekday ${now.day} $month';
+  }
 }
 
-class _TodaySessionCard extends StatelessWidget {
-  const _TodaySessionCard({
+class _WeekCalendarView extends StatelessWidget {
+  const _WeekCalendarView({
+    required this.currentWeek,
+    required this.completedDays,
+  });
+
+  final int currentWeek;
+  final Set<int> completedDays;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final List<String> compactLabels = <String>[
+      'Lun',
+      'Mar',
+      'Mer',
+      'Gio',
+      'Ven',
+      'Sab',
+      'Dom',
+    ];
+    final int today = DateTime.now().weekday;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Text(
+                'La tua settimana',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.baumannPrimaryBlue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  'Settimana $currentWeek',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: AppTheme.baumannPrimaryBlue,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: List<Widget>.generate(7, (int index) {
+              final int dayNumber = index + 1;
+              final bool isCompleted = completedDays.contains(dayNumber);
+              final bool isToday = dayNumber == today;
+
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: _CalendarDayChip(
+                    label: compactLabels[index],
+                    isCompleted: isCompleted,
+                    isToday: isToday,
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TodaysWorkoutCard extends StatelessWidget {
+  const _TodaysWorkoutCard({
     required this.path,
     required this.session,
-    required this.currentWeek,
     required this.onStart,
   });
 
   final PosturePath path;
   final DailySession session;
-  final int currentWeek;
   final VoidCallback onStart;
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final ThemeData theme = Theme.of(context);
 
-    return Card(
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: <Color>[
+            AppTheme.baumannPrimaryBlue.withValues(alpha: 0.95),
+            AppTheme.baumannSecondaryBlue.withValues(alpha: 0.9),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(32),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: AppTheme.baumannPrimaryBlue.withValues(alpha: 0.25),
+            blurRadius: 30,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(26, 26, 26, 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            Row(
+              children: <Widget>[
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    'Sessione di oggi',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                _PlayIconBadge(onTap: onStart),
+              ],
+            ),
+            const SizedBox(height: 18),
             Text(
-              path.title,
-              style: textTheme.labelLarge?.copyWith(
-                color: colorScheme.primary,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.6,
+              session.title,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.4,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Giorno ${session.dayNumber}: ${session.title}',
-              style: textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: Colors.black87,
-                letterSpacing: -0.4,
+              'Percorso: ${path.title}',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: Colors.white.withValues(alpha: 0.8),
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
+            const SizedBox(height: 18),
+            Wrap(
+              spacing: 12,
+              runSpacing: 10,
               children: <Widget>[
-                const Icon(Icons.timer_outlined,
-                    color: AppTheme.baumannAccentOrange),
-                const SizedBox(width: 8),
-                Text(
-                  '${session.estimatedDurationInMinutes} minuti',
-                  style: textTheme.bodyLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                _SessionMetaChip(
+                  icon: Icons.timer_outlined,
+                  label: '${session.estimatedDurationInMinutes} minuti',
                 ),
-                const Spacer(),
-                Chip(
-                  label: Text('Settimana $currentWeek'),
-                  avatar: const Icon(Icons.calendar_today_outlined, size: 18),
+                _SessionMetaChip(
+                  icon: Icons.calendar_view_day_outlined,
+                  label: 'Giorno ${session.dayNumber}',
+                ),
+                _SessionMetaChip(
+                  icon: Icons.sports_gymnastics_outlined,
+                  label: '${session.exercises.length} esercizi',
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 26),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppTheme.baumannPrimaryBlue,
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  textStyle: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 onPressed: onStart,
-                icon: const Icon(Icons.play_arrow_rounded, size: 26),
-                label: const Text('INIZIA'),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(Icons.play_arrow_rounded, size: 28),
+                    SizedBox(width: 8),
+                    Text('Inizia allenamento'),
+                  ],
+                ),
               ),
             ),
           ],
@@ -224,156 +514,153 @@ class _TodaySessionCard extends StatelessWidget {
   }
 }
 
-class _WeeklyProgressWidget extends StatelessWidget {
-  const _WeeklyProgressWidget({
-    required this.completedDays,
-    required this.currentWeek,
-  });
-
-  final Set<int> completedDays;
-  final int currentWeek;
-
-  @override
-  Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-    final List<String> labels = <String>['L', 'M', 'M', 'G', 'V', 'S', 'D'];
-    final int today = DateTime.now().weekday;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            Text(
-              'La Tua Settimana',
-              style:
-                  textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            Text(
-              'Settimana $currentWeek',
-              style: textTheme.labelLarge?.copyWith(color: Colors.black54),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List<Widget>.generate(7, (int index) {
-            final int dayNumber = index + 1;
-            final bool isCompleted = completedDays.contains(dayNumber);
-            final bool isToday = dayNumber == today;
-
-            return _WeekDayCircle(
-              label: labels[index],
-              isCompleted: isCompleted,
-              isToday: isToday,
-            );
-          }),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatisticsOverview extends StatelessWidget {
-  const _StatisticsOverview({
+class _WeekOverviewCard extends StatelessWidget {
+  const _WeekOverviewCard({
     required this.completedSessions,
     required this.currentStreak,
+    required this.totalWeeks,
+    required this.currentWeek,
   });
 
   final int completedSessions;
   final int currentStreak;
+  final int totalWeeks;
+  final int currentWeek;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: _StatCard(
-            icon: Icons.check_circle_outline,
-            value: completedSessions,
-            label: 'Sessioni Completate',
-            iconColor: AppTheme.baumannPrimaryBlue,
+    final ThemeData theme = Theme.of(context);
+
+    final List<_OverviewMetric> metrics = <_OverviewMetric>[
+      _OverviewMetric(
+        icon: Icons.check_circle_outline,
+        label: 'Sessioni completate',
+        value: '$completedSessions',
+        highlightColor: AppTheme.baumannPrimaryBlue,
+      ),
+      _OverviewMetric(
+        icon: Icons.local_fire_department_outlined,
+        label: 'Striscia attuale',
+        value: '${currentStreak}g',
+        highlightColor: AppTheme.baumannAccentOrange,
+      ),
+      _OverviewMetric(
+        icon: Icons.track_changes_outlined,
+        label: 'Progresso percorso',
+        value: '$currentWeek / $totalWeeks',
+        highlightColor: AppTheme.baumannSecondaryBlue,
+      ),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(22, 24, 22, 24),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 24,
+            offset: const Offset(0, 12),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _StatCard(
-            icon: Icons.local_fire_department_outlined,
-            value: currentStreak,
-            label: 'Giorni di Striscia',
-            iconColor: AppTheme.baumannAccentOrange,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Panoramica rapida',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 18),
+          Row(
+            children: metrics
+                .map((_) => Expanded(child: _WeeklyMetricTile(metric: _)))
+                .toList(growable: false),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.iconColor,
-  });
+class _AvatarBadge extends StatelessWidget {
+  const _AvatarBadge({required this.initial});
 
-  final IconData icon;
-  final int value;
-  final String label;
-  final Color iconColor;
+  final String initial;
 
   @override
   Widget build(BuildContext context) {
-    final TextTheme textTheme = Theme.of(context).textTheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Container(
-              height: 48,
-              width: 48,
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(icon, color: iconColor, size: 28),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    '$value',
-                    style: textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: Colors.black.withValues(alpha: 0.65),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: <Color>[
+            AppTheme.baumannPrimaryBlue.withValues(alpha: 0.95),
+            AppTheme.baumannSecondaryBlue.withValues(alpha: 0.9),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        initial,
+        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+      ),
+    );
+  }
+}
+
+class _SoftActionChip extends StatelessWidget {
+  const _SoftActionChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.primary.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(icon, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _WeekDayCircle extends StatelessWidget {
-  const _WeekDayCircle({
+class _CalendarDayChip extends StatelessWidget {
+  const _CalendarDayChip({
     required this.label,
     required this.isCompleted,
     required this.isToday,
@@ -386,50 +673,336 @@ class _WeekDayCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final Color primaryColor = colorScheme.primary;
-    final Color primary20 = primaryColor.withValues(alpha: 0.2);
-    final Color primary30 = primaryColor.withValues(alpha: 0.3);
-    final Color primary18 = primaryColor.withValues(alpha: 0.18);
-    final Color backgroundColor = isCompleted
+    final Color background = isCompleted
         ? AppTheme.baumannAccentOrange
         : isToday
-            ? primary20
+            ? colorScheme.primary.withValues(alpha: 0.1)
             : Colors.white;
     final Color borderColor = isCompleted
         ? AppTheme.baumannAccentOrange
         : isToday
             ? colorScheme.primary
-            : primary30;
-    final Color foregroundColor =
-        isCompleted ? Colors.white : colorScheme.primary;
+            : colorScheme.primary.withValues(alpha: 0.15);
 
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border.all(color: borderColor, width: 1.6),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: <BoxShadow>[
-          if (isToday)
-            BoxShadow(
-              color: primary18,
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-        ],
-      ),
-      child: Center(
-        child: isCompleted
-            ? const Icon(Icons.check_rounded, color: Colors.white)
-            : Text(
-                label,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: foregroundColor, fontWeight: FontWeight.w700),
+    return AspectRatio(
+      aspectRatio: 0.78,
+      child: Container(
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: borderColor, width: 1.5),
+          boxShadow: <BoxShadow>[
+            if (isToday)
+              BoxShadow(
+                color: colorScheme.primary.withValues(alpha: 0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
+          ],
+        ),
+        child: Center(
+          child: isCompleted
+              ? const Icon(Icons.check_rounded, color: Colors.white)
+              : Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: isToday
+                            ? colorScheme.primary
+                            : colorScheme.onSurface.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+        ),
       ),
     );
   }
+}
+
+class _SessionMetaChip extends StatelessWidget {
+  const _SessionMetaChip({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlayIconBadge extends StatelessWidget {
+  const _PlayIconBadge({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.2),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: const Padding(
+          padding: EdgeInsets.all(12),
+          child: Icon(
+            Icons.play_arrow_rounded,
+            color: Colors.white,
+            size: 28,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OverviewMetric {
+  const _OverviewMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.highlightColor,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color highlightColor;
+}
+
+class _WeeklyMetricTile extends StatelessWidget {
+  const _WeeklyMetricTile({required this.metric});
+
+  final _OverviewMetric metric;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
+        decoration: BoxDecoration(
+          color: metric.highlightColor.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: metric.highlightColor.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: metric.highlightColor.withValues(alpha: 0.18),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Icon(
+                metric.icon,
+                color: metric.highlightColor,
+                size: 22,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              metric.value,
+              style: theme.textTheme.headlineSmall?.copyWith(
+                color: metric.highlightColor,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              metric.label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PremiumContentHighlight extends StatelessWidget {
+  const _PremiumContentHighlight();
+
+  static const List<_MasterclassPreview> _mockMasterclasses =
+      <_MasterclassPreview>[
+    _MasterclassPreview(
+      title: 'Mobilità e Core Stability',
+      imageUrl:
+          'https://images.unsplash.com/photo-1554284126-aa88f22d8b74?auto=format&fit=crop&w=900&q=80',
+    ),
+    _MasterclassPreview(
+      title: 'Stretching Post-Lavoro',
+      imageUrl:
+          'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=900&q=80',
+    ),
+    _MasterclassPreview(
+      title: 'Rilassamento e Respirazione',
+      imageUrl:
+          'https://images.unsplash.com/photo-1517832207067-4db24a2ae47c?auto=format&fit=crop&w=900&q=80',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          'Masterclass in Evidenza',
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 200,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _mockMasterclasses.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 16),
+            itemBuilder: (BuildContext context, int index) {
+              final _MasterclassPreview masterclass = _mockMasterclasses[index];
+              return SizedBox(
+                width: 220,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: () {
+                    ScaffoldMessenger.of(context)
+                      ..hideCurrentSnackBar()
+                      ..showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Presto disponibile: ${masterclass.title}',
+                          ),
+                        ),
+                      );
+                  },
+                  child: Card(
+                    clipBehavior: Clip.antiAlias,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Stack(
+                      children: <Widget>[
+                        Positioned.fill(
+                          child: Image.network(
+                            masterclass.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (
+                              BuildContext context,
+                              Object error,
+                              StackTrace? stackTrace,
+                            ) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: <Color>[
+                                      AppTheme.baumannPrimaryBlue
+                                          .withValues(alpha: 0.65),
+                                      AppTheme.baumannSecondaryBlue
+                                          .withValues(alpha: 0.7),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.play_circle_outline,
+                                  color: Colors.white70,
+                                  size: 54,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: <Color>[
+                                  Colors.black.withValues(alpha: 0.1),
+                                  Colors.black.withValues(alpha: 0.55),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 16,
+                          right: 16,
+                          bottom: 20,
+                          child: Text(
+                            masterclass.title,
+                            style: textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MasterclassPreview {
+  const _MasterclassPreview({
+    required this.title,
+    required this.imageUrl,
+  });
+
+  final String title;
+  final String imageUrl;
 }
 
 class _TipOfTheDayCard extends StatelessWidget {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../common_widgets/shimmer_widgets.dart';
 import '../controllers/my_path_controller.dart';
 import '../models/daily_session.dart';
 import '../models/path_module.dart';
@@ -47,7 +48,7 @@ class _MyPathScreenState extends ConsumerState<MyPathScreen> {
       ),
       body: SafeArea(
         child: state.isLoading && !state.hasData
-            ? const Center(child: CircularProgressIndicator())
+            ? const _MyPathLoadingSkeleton()
             : state.path == null
                 ? _EmptyPlaceholder(onRetry: controller.fetchPath)
                 : _PathContent(
@@ -56,6 +57,22 @@ class _MyPathScreenState extends ConsumerState<MyPathScreen> {
                     controller: controller,
                   ),
       ),
+    );
+  }
+}
+
+class _MyPathLoadingSkeleton extends StatelessWidget {
+  const _MyPathLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      itemBuilder: (BuildContext context, int index) {
+        return const ShimmerBox(height: 96, borderRadius: 18);
+      },
+      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      itemCount: 6,
     );
   }
 }
@@ -178,8 +195,7 @@ class _WeekExpansionTile extends StatelessWidget {
               .map(
                 (DailySession session) => _DailySessionListItem(
                   session: session,
-                  isCompleted:
-                      state.completedSessionIds.contains(session.id),
+                  isCompleted: state.completedSessionIds.contains(session.id),
                   isNext: session.id == nextSessionId,
                 ),
               )

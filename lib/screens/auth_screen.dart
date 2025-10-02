@@ -33,6 +33,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     super.dispose();
   }
 
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _handleSubmit(bool isRegister) async {
     final AuthState state = ref.read(authControllerProvider);
     if (state.isLoading) {
@@ -60,7 +67,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       setState(() {
         _isRegisterMode = true;
       });
-      ref.read(authControllerProvider.notifier).clearError();
       return;
     }
     await _handleSubmit(true);
@@ -72,18 +78,22 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _nameController.clear();
       _confirmPasswordController.clear();
     });
-    ref.read(authControllerProvider.notifier).clearError();
   }
 
   @override
   Widget build(BuildContext context) {
     final AuthState authState = ref.watch(authControllerProvider);
-    final AuthController authController =
-        ref.read(authControllerProvider.notifier);
     final ThemeData theme = Theme.of(context);
     final TextStyle? inputTextStyle = theme.textTheme.bodyLarge;
     final Color cursorColor = theme.colorScheme.primary;
-    final bool hasError = (authState.errorMessage ?? '').trim().isNotEmpty;
+
+    ref.listen<AuthState>(authControllerProvider,
+        (AuthState? previous, AuthState next) {
+      if (next.errorMessage != null && next.errorMessage!.isNotEmpty) {
+        _showErrorSnackBar(next.errorMessage!);
+        ref.read(authControllerProvider.notifier).clearError();
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -108,47 +118,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     'Inserisci le tue credenziali per continuare oppure crea un nuovo account.',
                     textAlign: TextAlign.center,
                   ),
-                  if (hasError) ...<Widget>[
-                    const SizedBox(height: 16),
-                    Material(
-                      color: theme.colorScheme.errorContainer,
-                      borderRadius: BorderRadius.circular(12),
-                      elevation: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            const Icon(
-                              Icons.error_outline,
-                              color: Colors.redAccent,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                authState.errorMessage!,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onErrorContainer,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: authState.isLoading
-                                  ? null
-                                  : () => authController.clearError(),
-                              icon: const Icon(Icons.close),
-                              color: theme.colorScheme.onErrorContainer,
-                              tooltip: 'Chiudi messaggio',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 24),
                   Card(
                     elevation: 2,
@@ -206,7 +175,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   if (trimmed.isEmpty) {
                                     return 'Inserisci una email.';
                                   }
-                                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                                  if (!RegExp(
+                                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                                       .hasMatch(trimmed)) {
                                     return 'Inserisci una email valida.';
                                   }
@@ -298,8 +268,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 width: double.infinity,
                                 child: OutlinedButton(
                                   onPressed: authState.isLoading
-                                      ? null
-                                      : () => _onRegisterPressed(),
+                    ? null
+                    : () => _onRegisterPressed(),
                                   child: authState.isLoading && _isRegisterMode
                                       ? const SizedBox(
                                           width: 20,

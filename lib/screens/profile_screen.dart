@@ -8,6 +8,7 @@ import '../services/data_uploader_service.dart';
 import '../theme/theme.dart';
 import 'auth_screen.dart';
 import 'paywall_screen.dart';
+import 'specialists_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -38,7 +39,8 @@ class ProfileScreen extends ConsumerWidget {
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium
-                              ?.copyWith(color: Theme.of(context).colorScheme.error),
+                              ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -54,6 +56,8 @@ class ProfileScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 24),
                     const _MasterclassSection(),
+                    const SizedBox(height: 24),
+                    const _ConsultationCard(),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () => _handleSeedUpload(context),
@@ -244,6 +248,66 @@ class _MasterclassSection extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ConsultationCard extends StatelessWidget {
+  const _ConsultationCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      elevation: 1.5,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<SpecialistsScreen>(
+              builder: (_) => const SpecialistsScreen(),
+            ),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Icon(
+                Icons.calendar_month_outlined,
+                color: AppTheme.baumannPrimaryBlue,
+                size: 32,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Prenota una Consulenza 1-a-1',
+                      style: textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Scegli il professionista più adatto per una sessione personalizzata in videochiamata.',
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: Colors.black.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppTheme.baumannSecondaryBlue),
+            ],
+          ),
         ),
       ),
     );

@@ -334,7 +334,7 @@ class ExercisePlayerController
     _ticker?.cancel();
     await _pauseVideo();
 
-    unawaited(_markSessionCompletion(state.session.id));
+    await _markSessionCompletion(state.session.id);
     state = state.copyWith(
       isPlaying: false,
       countdownValue: 0,
