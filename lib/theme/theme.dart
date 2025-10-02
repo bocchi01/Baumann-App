@@ -99,7 +99,7 @@ class AppTheme {
       ),
 
       // Stile per le Card
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 2.0,
         color: Colors.white,
         shadowColor: Colors.black.withValues(alpha: 0.05),
@@ -158,16 +158,16 @@ extension ColorWithValues on Color {
     double? green,
     double? blue,
   }) {
-    int resolveComponent(double? component, int original) {
-      if (component == null) return original;
-      final double normalized = component > 1 ? component / 255 : component;
+    int resolveComponent(double? component, double original) {
+      final double effective = component ?? original;
+      final double normalized = effective > 1 ? effective / 255 : effective;
       return (normalized.clamp(0.0, 1.0) * 255).round();
     }
 
-    final int a = resolveComponent(alpha, this.alpha);
-    final int r = resolveComponent(red, this.red);
-    final int g = resolveComponent(green, this.green);
-    final int b = resolveComponent(blue, this.blue);
+    final int a = resolveComponent(alpha, this.a);
+    final int r = resolveComponent(red, this.r);
+    final int g = resolveComponent(green, this.g);
+    final int b = resolveComponent(blue, this.b);
 
     return Color.fromARGB(a, r, g, b);
   }

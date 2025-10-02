@@ -4,12 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../common_widgets/shimmer_widgets.dart';
 import '../controllers/dashboard_controller.dart';
 import '../models/daily_session.dart';
+import '../models/path_module.dart';
 import '../models/posture_path.dart';
 import '../theme/theme.dart';
 import 'exercise_player_screen.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({
+    super.key,
+    required this.selectedDate,
+  });
+
+  final DateTime selectedDate;
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
@@ -50,7 +56,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           switchOutCurve: Curves.easeInCubic,
           child: state.isLoading
               ? const _DashboardLoadingSkeleton()
-              : _DashboardContent(state: state),
+              : _DashboardContent(
+                  state: state,
+                  selectedDate: widget.selectedDate,
+                ),
         ),
       ),
     );
@@ -58,19 +67,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 }
 
 class _DashboardContent extends StatelessWidget {
-  const _DashboardContent({required this.state});
+  const _DashboardContent({
+    required this.state,
+    required this.selectedDate,
+  });
 
   final DashboardState state;
+  final DateTime selectedDate;
 
   @override
   Widget build(BuildContext context) {
-    if (state.path == null ||
-        state.todaySession == null ||
-        state.user == null) {
+    if (state.path == null || state.user == null) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(24.0),
           child: Text('Nessun percorso disponibile al momento.'),
+        ),
+      );
+    }
+
+    final DailySession? session =
+        _resolveSessionForDate(state.path!, selectedDate);
+    if (session == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24.0),
+          child: Text('Nessuna sessione pianificata per questo giorno.'),
         ),
       );
     }
@@ -94,25 +116,21 @@ class _DashboardContent extends StatelessWidget {
           email: state.user!.email,
           avatarInitial: avatarInitial,
         ),
-        const SizedBox(height: 20),
-        _WeekCalendarView(
-          currentWeek: state.currentWeek,
-          completedDays: state.completedDays,
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         _TodaysWorkoutCard(
           path: state.path!,
-          session: state.todaySession!,
-          onStart: () => _startSession(context, state.todaySession!),
+          session: session,
+          onStart: () => _startSession(context, session),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 28),
         _WeekOverviewCard(
           completedSessions: state.completedSessionsCount,
           currentStreak: state.currentStreak,
           totalWeeks: state.path!.durationInWeeks,
-          currentWeek: state.currentWeek,
+          currentWeek:
+              _determineWeekForSession(state.path!, session) ?? state.currentWeek,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         const _PremiumContentHighlight(),
         const SizedBox(height: 24),
         const _TipOfTheDayCard(),
@@ -127,6 +145,51 @@ class _DashboardContent extends StatelessWidget {
       ),
     );
   }
+
+  static DailySession? _resolveSessionForDate(
+    PosturePath path,
+    DateTime selectedDate,
+  ) {
+    final List<DailySession> sessions = path.modules
+        .expand<DailySession>((PathModule module) => module.sessions)
+        .toList(growable: false);
+    sessions.sort(
+      (DailySession a, DailySession b) => a.dayNumber.compareTo(b.dayNumber),
+    );
+
+    if (sessions.isEmpty) {
+      return null;
+    }
+
+    final int targetDay = selectedDate.weekday;
+    for (final DailySession session in sessions) {
+      if (session.dayNumber == targetDay) {
+        return session;
+      }
+    }
+
+    for (final DailySession session in sessions) {
+      if (session.dayNumber > targetDay) {
+        return session;
+      }
+    }
+
+    return sessions.last;
+  }
+
+  static int? _determineWeekForSession(
+    PosturePath path,
+    DailySession session,
+  ) {
+    for (final PathModule module in path.modules) {
+      final bool containsSession = module.sessions
+          .any((DailySession candidate) => candidate.id == session.id);
+      if (containsSession) {
+        return module.weekNumber;
+      }
+    }
+    return null;
+  }
 }
 
 class _DashboardLoadingSkeleton extends StatelessWidget {
@@ -139,11 +202,9 @@ class _DashboardLoadingSkeleton extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
       children: const <Widget>[
         ShimmerBox(height: 120, borderRadius: 26),
-        SizedBox(height: 20),
-        ShimmerBox(height: 110, borderRadius: 26),
-        SizedBox(height: 20),
+        SizedBox(height: 24),
         ShimmerBox(height: 240, borderRadius: 30),
-        SizedBox(height: 20),
+        SizedBox(height: 24),
         ShimmerBox(height: 160, borderRadius: 24),
         SizedBox(height: 24),
         ShimmerBox(height: 200, borderRadius: 24),
@@ -290,96 +351,6 @@ class _OverviewHeader extends StatelessWidget {
     final String weekday = weekdayNames[now.weekday - 1];
     final String month = monthNames[now.month - 1];
     return '$weekday ${now.day} $month';
-  }
-}
-
-class _WeekCalendarView extends StatelessWidget {
-  const _WeekCalendarView({
-    required this.currentWeek,
-    required this.completedDays,
-  });
-
-  final int currentWeek;
-  final Set<int> completedDays;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final List<String> compactLabels = <String>[
-      'Lun',
-      'Mar',
-      'Mer',
-      'Gio',
-      'Ven',
-      'Sab',
-      'Dom',
-    ];
-    final int today = DateTime.now().weekday;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Text(
-                'La tua settimana',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppTheme.baumannPrimaryBlue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  'Settimana $currentWeek',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: AppTheme.baumannPrimaryBlue,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Row(
-            children: List<Widget>.generate(7, (int index) {
-              final int dayNumber = index + 1;
-              final bool isCompleted = completedDays.contains(dayNumber);
-              final bool isToday = dayNumber == today;
-
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: _CalendarDayChip(
-                    label: compactLabels[index],
-                    isCompleted: isCompleted,
-                    isToday: isToday,
-                  ),
-                ),
-              );
-            }),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -653,65 +624,6 @@ class _SoftActionChip extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CalendarDayChip extends StatelessWidget {
-  const _CalendarDayChip({
-    required this.label,
-    required this.isCompleted,
-    required this.isToday,
-  });
-
-  final String label;
-  final bool isCompleted;
-  final bool isToday;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final Color background = isCompleted
-        ? AppTheme.baumannAccentOrange
-        : isToday
-            ? colorScheme.primary.withValues(alpha: 0.1)
-            : Colors.white;
-    final Color borderColor = isCompleted
-        ? AppTheme.baumannAccentOrange
-        : isToday
-            ? colorScheme.primary
-            : colorScheme.primary.withValues(alpha: 0.15);
-
-    return AspectRatio(
-      aspectRatio: 0.78,
-      child: Container(
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: borderColor, width: 1.5),
-          boxShadow: <BoxShadow>[
-            if (isToday)
-              BoxShadow(
-                color: colorScheme.primary.withValues(alpha: 0.18),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-          ],
-        ),
-        child: Center(
-          child: isCompleted
-              ? const Icon(Icons.check_rounded, color: Colors.white)
-              : Text(
-                  label,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: isToday
-                            ? colorScheme.primary
-                            : colorScheme.onSurface.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
         ),
       ),
     );

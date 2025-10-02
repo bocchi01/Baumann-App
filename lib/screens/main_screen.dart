@@ -23,13 +23,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   int _selectedIndex = 0;
   DateTime _selectedDay = DateTime.now();
 
-  late final List<Widget> _screens = <Widget>[
-    const DashboardScreen(),
-    const MyPathScreen(),
-    const ActivityScreen(),
-    const CommunityScreen(),
-  ];
-
   // TODO: collegare questi dati con il piano reale dell'utente quando sarà disponibile.
   final Set<int> _plannedWorkoutWeekdays = <int>{1, 3, 5};
 
@@ -41,7 +34,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   void _onDaySelected(DateTime day) {
-    setState(() => _selectedDay = day);
+    setState(() {
+      _selectedDay = day;
+      _selectedIndex = 0;
+    });
   }
 
   void _openSettings() {
@@ -67,6 +63,13 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final ProfileState profileState = ref.watch(profileControllerProvider);
     final String initials = _resolveInitials(profileState.user);
 
+    final List<Widget> screens = <Widget>[
+      DashboardScreen(selectedDate: _selectedDay),
+      const MyPathScreen(),
+      const ActivityScreen(),
+      const CommunityScreen(),
+    ];
+
     return Scaffold(
       extendBody: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -80,7 +83,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       ),
       body: IndexedStack(
         index: _selectedIndex,
-        children: _screens,
+        children: screens,
       ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

@@ -30,7 +30,7 @@ class WeekCalendarAppBar extends StatefulWidget implements PreferredSizeWidget {
   final String avatarInitials;
 
   @override
-  Size get preferredSize => const Size.fromHeight(160);
+  Size get preferredSize => const Size.fromHeight(210);
 
   @override
   State<WeekCalendarAppBar> createState() => _WeekCalendarAppBarState();
@@ -136,7 +136,7 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? theme.colorScheme.primary.withOpacity(0.15)
+                            ? theme.colorScheme.primary.withValues(alpha: 0.15)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
@@ -155,7 +155,7 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                               color: isSelected || isToday
                                   ? theme.colorScheme.primary
                                   : theme.colorScheme.onSurface
-                                      .withOpacity(0.6),
+                                      .withValues(alpha: 0.6),
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -168,7 +168,7 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                                   ? theme.colorScheme.primary
                                   : (isToday
                                       ? theme.colorScheme.primary
-                                          .withOpacity(0.1)
+                                          .withValues(alpha: 0.1)
                                       : theme.colorScheme.surface),
                               border: isToday && !isSelected
                                   ? Border.all(color: theme.colorScheme.primary)
