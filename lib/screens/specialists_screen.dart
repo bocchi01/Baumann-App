@@ -10,7 +10,7 @@ final Provider<ISpecialistRepository> specialistRepositoryProvider =
   return const MockSpecialistRepository();
 });
 
-final AutoDisposeFutureProvider<List<Specialist>> availableSpecialistsProvider =
+final availableSpecialistsProvider =
     FutureProvider.autoDispose<List<Specialist>>((Ref ref) {
   final ISpecialistRepository repository =
       ref.watch(specialistRepositoryProvider);

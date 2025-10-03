@@ -123,25 +123,26 @@ class ExercisePlayerState {
 final Provider<MockExerciseCatalog> exerciseCatalogProvider =
     Provider<MockExerciseCatalog>((Ref ref) => const MockExerciseCatalog());
 
-final AutoDisposeNotifierProviderFamily<ExercisePlayerController,
-        ExercisePlayerState, DailySession> exercisePlayerControllerProvider =
-    AutoDisposeNotifierProviderFamily<ExercisePlayerController,
-        ExercisePlayerState, DailySession>(ExercisePlayerController.new);
+final exercisePlayerControllerProvider = NotifierProvider.autoDispose
+    .family<ExercisePlayerController, ExercisePlayerState, DailySession>(
+  ExercisePlayerController.new,
+);
 
-class ExercisePlayerController
-    extends AutoDisposeFamilyNotifier<ExercisePlayerState, DailySession> {
+class ExercisePlayerController extends Notifier<ExercisePlayerState> {
+  ExercisePlayerController(this._session);
+
   static const int _restDurationInSeconds = 10;
 
   Timer? _ticker;
   bool _initialized = false;
+  final DailySession _session;
 
   MockExerciseCatalog get _catalog => ref.read(exerciseCatalogProvider);
 
   @override
-  ExercisePlayerState build(DailySession arg) {
-    final DailySession session = arg;
+  ExercisePlayerState build() {
     ref.onDispose(_disposeResources);
-    return ExercisePlayerState.initial(session);
+    return ExercisePlayerState.initial(_session);
   }
 
   Future<void> init() async {

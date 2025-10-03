@@ -60,20 +60,20 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyB73yUfgqJUyAdNcnh5Ff1ccDoRGmfEikA',
-    appId: '1:465049224153:ios:9523c5c8eadfaa91aa4fc8',
+    appId: '1:465049224153:ios:d3bd53e4fd1c6b4caa4fc8',
     messagingSenderId: '465049224153',
     projectId: 'baumann-app',
     storageBucket: 'baumann-app.firebasestorage.app',
-    iosBundleId: 'com.example.postureApp.RunnerTests',
+    iosBundleId: 'com.Istituto-Baumann.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyB73yUfgqJUyAdNcnh5Ff1ccDoRGmfEikA',
-    appId: '1:465049224153:ios:8ec74fac910b4ea9aa4fc8',
+    appId: '1:465049224153:ios:d3bd53e4fd1c6b4caa4fc8',
     messagingSenderId: '465049224153',
     projectId: 'baumann-app',
     storageBucket: 'baumann-app.firebasestorage.app',
-    iosBundleId: 'com.example.postureApp',
+    iosBundleId: 'com.Istituto-Baumann.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'baumann-app.firebasestorage.app',
     measurementId: 'G-5TDNY65FZK',
   );
+
 }

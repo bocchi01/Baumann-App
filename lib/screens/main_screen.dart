@@ -62,6 +62,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     final ProfileState profileState = ref.watch(profileControllerProvider);
     final String initials = _resolveInitials(profileState.user);
+    final String displayName = _resolveDisplayName(profileState.user);
+    final String greeting = _resolveGreeting();
+    final String dateLabel = _formatSelectedDate(_selectedDay);
 
     final List<Widget> screens = <Widget>[
       DashboardScreen(selectedDate: _selectedDay),
@@ -78,8 +81,12 @@ class _MainScreenState extends ConsumerState<MainScreen> {
         onDaySelected: _onDaySelected,
         onAvatarTap: _openSettings,
         onNotificationTap: () => _showComingSoon('Notifiche'),
+        onReportTap: () => _showComingSoon('Report giornaliero'),
         avatarInitials: initials,
         weekdayWithWorkout: _plannedWorkoutWeekdays,
+        greeting: greeting,
+        userName: displayName,
+        dateLabel: dateLabel,
       ),
       body: IndexedStack(
         index: _selectedIndex,
@@ -177,5 +184,54 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final String first = parts.first.substring(0, 1);
     final String last = parts.last.substring(0, 1);
     return (first + last).toUpperCase();
+  }
+
+  String _resolveDisplayName(UserModel? user) {
+    final String? name = user?.name;
+    if (name != null && name.trim().isNotEmpty) {
+      return '${name.trim()} 👋';
+    }
+    final String? email = user?.email;
+    if (email != null && email.trim().isNotEmpty) {
+      return '${email.trim()} 👋';
+    }
+    return 'Ciao 👋';
+  }
+
+  String _resolveGreeting() {
+    final int hour = DateTime.now().hour;
+    if (hour < 12) return 'Buongiorno';
+    if (hour < 18) return 'Buon pomeriggio';
+    return 'Buonasera';
+  }
+
+  String _formatSelectedDate(DateTime date) {
+    const List<String> weekdayNames = <String>[
+      'Lunedì',
+      'Martedì',
+      'Mercoledì',
+      'Giovedì',
+      'Venerdì',
+      'Sabato',
+      'Domenica',
+    ];
+    const List<String> monthNames = <String>[
+      'Gennaio',
+      'Febbraio',
+      'Marzo',
+      'Aprile',
+      'Maggio',
+      'Giugno',
+      'Luglio',
+      'Agosto',
+      'Settembre',
+      'Ottobre',
+      'Novembre',
+      'Dicembre',
+    ];
+
+    final String weekday = weekdayNames[date.weekday - 1];
+    final String month = monthNames[date.month - 1];
+    return '$weekday ${date.day} $month';
   }
 }

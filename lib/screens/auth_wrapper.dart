@@ -61,8 +61,8 @@ class _ProfileDecisionGate extends ConsumerWidget {
   }
 }
 
-final AutoDisposeFutureProviderFamily<DocumentSnapshot<Map<String, dynamic>>?,
-    String> _profileLoaderProvider = AutoDisposeFutureProvider.family(
+final _profileLoaderProvider = FutureProvider.autoDispose
+    .family<DocumentSnapshot<Map<String, dynamic>>?, String>(
   (Ref ref, String userId) async {
     try {
       final DocumentSnapshot<Map<String, dynamic>> snapshot =

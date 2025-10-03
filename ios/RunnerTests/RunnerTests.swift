@@ -1,7 +1,8 @@
-#if canImport(XCTest)
+import Flutter
+import UIKit
 import XCTest
 
-final class RunnerTests: XCTestCase {
+class RunnerTests: XCTestCase {
 
   func testExample() {
     // If you add code to the Runner application, consider adding tests here.
@@ -9,4 +10,3 @@ final class RunnerTests: XCTestCase {
   }
 
 }
-#endif

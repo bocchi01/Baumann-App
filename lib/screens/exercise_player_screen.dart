@@ -19,27 +19,27 @@ class ExercisePlayerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AutoDisposeNotifierProviderFamily<
-        ExercisePlayerController,
-        ExercisePlayerState,
-        DailySession> provider = exercisePlayerControllerProvider;
-    final ExercisePlayerState state = ref.watch(provider(session));
+    final ExercisePlayerState state =
+        ref.watch(exercisePlayerControllerProvider(session));
     final ExercisePlayerController controller =
-        ref.read(provider(session).notifier);
+        ref.read(exercisePlayerControllerProvider(session).notifier);
 
-    ref.listen<ExercisePlayerState>(provider(session), (previous, next) {
-      if (previous == null) {
-        controller.init();
-      }
-      if (previous?.phase != ExercisePlayerPhase.finished &&
-          next.phase == ExercisePlayerPhase.finished) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute<void>(
-            builder: (_) => SessionCompleteScreen(session: session),
-          ),
-        );
-      }
-    });
+    ref.listen<ExercisePlayerState>(
+      exercisePlayerControllerProvider(session),
+      (ExercisePlayerState? previous, ExercisePlayerState next) {
+        if (previous == null) {
+          controller.init();
+        }
+        if (previous?.phase != ExercisePlayerPhase.finished &&
+            next.phase == ExercisePlayerPhase.finished) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute<void>(
+              builder: (_) => SessionCompleteScreen(session: session),
+            ),
+          );
+        }
+      },
+    );
 
     final MockExerciseCatalog catalog = ref.watch(exerciseCatalogProvider);
     final Exercise? currentExercise = state.currentExercise ??

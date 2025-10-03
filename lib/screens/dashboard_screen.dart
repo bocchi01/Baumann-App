@@ -97,26 +97,10 @@ class _DashboardContent extends StatelessWidget {
       );
     }
 
-    final String userName = (state.user!.name?.trim().isNotEmpty ?? false)
-        ? state.user!.name!
-        : state.user!.email;
-    final String fallbackEmail = state.user!.email.trim().isNotEmpty
-        ? state.user!.email.trim()
-        : 'Utente';
-    final String avatarInitial =
-        (userName.trim().isNotEmpty ? userName.trim()[0] : fallbackEmail[0])
-            .toUpperCase();
-
     return ListView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
       children: <Widget>[
-        _OverviewHeader(
-          name: userName,
-          email: state.user!.email,
-          avatarInitial: avatarInitial,
-        ),
-        const SizedBox(height: 24),
         _TodaysWorkoutCard(
           path: state.path!,
           session: session,
@@ -127,8 +111,8 @@ class _DashboardContent extends StatelessWidget {
           completedSessions: state.completedSessionsCount,
           currentStreak: state.currentStreak,
           totalWeeks: state.path!.durationInWeeks,
-          currentWeek:
-              _determineWeekForSession(state.path!, session) ?? state.currentWeek,
+          currentWeek: _determineWeekForSession(state.path!, session) ??
+              state.currentWeek,
         ),
         const SizedBox(height: 28),
         const _PremiumContentHighlight(),
@@ -199,7 +183,7 @@ class _DashboardLoadingSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 36),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
       children: const <Widget>[
         ShimmerBox(height: 120, borderRadius: 26),
         SizedBox(height: 24),
@@ -212,145 +196,6 @@ class _DashboardLoadingSkeleton extends StatelessWidget {
         ShimmerBox(height: 140, borderRadius: 20),
       ],
     );
-  }
-}
-
-class _OverviewHeader extends StatelessWidget {
-  const _OverviewHeader({
-    required this.name,
-    required this.email,
-    required this.avatarInitial,
-  });
-
-  final String name;
-  final String email;
-  final String avatarInitial;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final String greeting = _resolveGreeting();
-    final String todayLabel = _resolveTodayLabel();
-
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 28,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          _AvatarBadge(initial: avatarInitial),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  greeting,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$name 👋',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: <Widget>[
-                    Icon(
-                      Icons.calendar_month_outlined,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.85),
-                      size: 18,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      todayLabel,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  email,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _SoftActionChip(
-            icon: Icons.auto_graph_rounded,
-            label: 'Report',
-            onTap: () {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  const SnackBar(
-                    content: Text('Report giornaliero presto disponibile'),
-                  ),
-                );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _resolveGreeting() {
-    final int hour = DateTime.now().hour;
-    if (hour < 12) return 'Buongiorno';
-    if (hour < 18) return 'Buon pomeriggio';
-    return 'Buonasera';
-  }
-
-  String _resolveTodayLabel() {
-    const List<String> weekdayNames = <String>[
-      'Lunedì',
-      'Martedì',
-      'Mercoledì',
-      'Giovedì',
-      'Venerdì',
-      'Sabato',
-      'Domenica',
-    ];
-    const List<String> monthNames = <String>[
-      'Gennaio',
-      'Febbraio',
-      'Marzo',
-      'Aprile',
-      'Maggio',
-      'Giugno',
-      'Luglio',
-      'Agosto',
-      'Settembre',
-      'Ottobre',
-      'Novembre',
-      'Dicembre',
-    ];
-    final DateTime now = DateTime.now();
-    final String weekday = weekdayNames[now.weekday - 1];
-    final String month = monthNames[now.month - 1];
-    return '$weekday ${now.day} $month';
   }
 }
 
@@ -546,85 +391,13 @@ class _WeekOverviewCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          Row(
-            children: metrics
-                .map((_) => Expanded(child: _WeeklyMetricTile(metric: _)))
-                .toList(growable: false),
-          ),
+      Row(
+      children: metrics
+        .map<Widget>((_OverviewMetric metric) =>
+          Expanded(child: _WeeklyMetricTile(metric: metric)))
+        .toList(growable: false),
+      ),
         ],
-      ),
-    );
-  }
-}
-
-class _AvatarBadge extends StatelessWidget {
-  const _AvatarBadge({required this.initial});
-
-  final String initial;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: <Color>[
-            AppTheme.baumannPrimaryBlue.withValues(alpha: 0.95),
-            AppTheme.baumannSecondaryBlue.withValues(alpha: 0.9),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        initial,
-        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
-      ),
-    );
-  }
-}
-
-class _SoftActionChip extends StatelessWidget {
-  const _SoftActionChip({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.primary.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Icon(icon, size: 18, color: theme.colorScheme.primary),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

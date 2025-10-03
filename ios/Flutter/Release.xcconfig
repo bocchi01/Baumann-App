@@ -1,6 +1,2 @@
-# Include CocoaPods settings for both Profile and Release configurations.
-# The `include?` directive safely skips files that don't exist.
-# This ensures the Profile build links the Flutter and plugin pods.
-#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"

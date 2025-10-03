@@ -9,6 +9,10 @@ class WeekCalendarAppBar extends StatefulWidget implements PreferredSizeWidget {
     this.initialDate,
     this.weekdayWithWorkout = const <int>{},
     this.avatarInitials = 'ME',
+    required this.greeting,
+    required this.userName,
+    required this.dateLabel,
+    this.onReportTap,
   });
 
   /// Callback quando l'utente seleziona un giorno nella vista settimanale.
@@ -28,6 +32,18 @@ class WeekCalendarAppBar extends StatefulWidget implements PreferredSizeWidget {
 
   /// Iniziali mostrate nell'avatar.
   final String avatarInitials;
+
+  /// Saluto contestuale mostrato sopra il calendario.
+  final String greeting;
+
+  /// Nome visualizzato accanto al saluto.
+  final String userName;
+
+  /// Data formattata della giornata selezionata.
+  final String dateLabel;
+
+  /// Callback per il tap sul pulsante report.
+  final VoidCallback? onReportTap;
 
   @override
   Size get preferredSize => const Size.fromHeight(210);
@@ -87,11 +103,12 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 GestureDetector(
                   onTap: widget.onAvatarTap,
                   child: CircleAvatar(
-                    radius: 28,
+                    radius: 26,
                     backgroundColor: theme.colorScheme.primary,
                     child: Text(
                       widget.avatarInitials,
@@ -102,7 +119,64 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                     ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        widget.greeting,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.65),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.userName,
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Icon(
+                              Icons.calendar_month,
+                              size: 16,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              widget.dateLabel,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (widget.onReportTap != null)
+                  _ReportChip(onTap: widget.onReportTap!),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.notifications_outlined),
                   color: theme.colorScheme.primary,
@@ -110,15 +184,7 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              'Il tuo programma della settimana',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             Row(
               children: List<Widget>.generate(7, (int index) {
                 final DateTime day = startOfWeek.add(Duration(days: index));
@@ -218,5 +284,45 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
 
   bool _isSameDate(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+}
+
+class _ReportChip extends StatelessWidget {
+  const _ReportChip({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.primary.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                Icons.bar_chart_rounded,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Report',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

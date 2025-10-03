@@ -45,12 +45,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSBonjourServices</key>
-	<array>
-		<string>_dartobservatory._tcp</string>
-		<string>_flutterobservatory._tcp</string>
-	</array>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>L'app utilizza la rete locale per collegarsi in modo sicuro ai servizi di debug e sincronizzazione dei dispositivi nelle vicinanze.</string>
 </dict>
 </plist>
