@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter_haptic_feedback/flutter_haptic_feedback.dart';
+import 'package:haptic_feedback/haptic_feedback.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 
@@ -286,8 +286,7 @@ class ExercisePlayerController extends Notifier<ExercisePlayerState> {
       if (state.phase == ExercisePlayerPhase.resting &&
           nextValue > 0 &&
           nextValue <= 3) {
-        _emitHaptic(
-            () => FlutterHapticFeedback.impact(ImpactFeedbackStyle.light, 0.6));
+    _emitHaptic(() => Haptics.vibrate(HapticsType.light));
       }
 
       if (nextValue <= 0) {
@@ -309,9 +308,7 @@ class ExercisePlayerController extends Notifier<ExercisePlayerState> {
 
     await _pauseVideo();
 
-    _emitHaptic(
-      () => FlutterHapticFeedback.impact(ImpactFeedbackStyle.medium, 1),
-    );
+    _emitHaptic(() => Haptics.vibrate(HapticsType.medium));
 
     state = state.copyWith(
       phase: ExercisePlayerPhase.resting,
