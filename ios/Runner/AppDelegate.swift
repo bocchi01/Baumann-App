@@ -1,13 +1,16 @@
-#if canImport(UIKit)
+#if canImport(Flutter) && canImport(UIKit)
 import UIKit
 import Flutter
 import FirebaseCore
 
-@UIApplicationMain
+@main
 @objc class AppDelegate: FlutterAppDelegate {
-  override init() {
-    super.init()
+  override func application(
+    _ application: UIApplication,
+    willFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) -> Bool {
     configureFirebaseIfNeeded()
+    return super.application(application, willFinishLaunchingWithOptions: launchOptions)
   }
 
   override func application(
@@ -15,7 +18,6 @@ import FirebaseCore
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     configureFirebaseIfNeeded()
-    
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
@@ -28,7 +30,7 @@ import FirebaseCore
 
 #elseif canImport(FlutterMacOS)
 import FlutterMacOS
-import FirebaseCore // <-- Aggiunto l'import mancante
+import FirebaseCore
 
 @main
 class AppDelegate: FlutterAppDelegate {
@@ -39,7 +41,6 @@ class AppDelegate: FlutterAppDelegate {
 
   override func applicationDidFinishLaunching(_ notification: Notification) {
     configureFirebaseIfNeeded()
-    
     RegisterGeneratedPlugins(registry: self)
     super.applicationDidFinishLaunching(notification)
   }
@@ -49,4 +50,13 @@ class AppDelegate: FlutterAppDelegate {
     FirebaseApp.configure()
   }
 }
+#else
+// Fallback to avoid build errors if not importing Flutter (for code completion or previews)
+#if canImport(UIKit)
+import UIKit
+class AppDelegate: UIResponder, UIApplicationDelegate {}
+#else
+import Foundation
+class AppDelegate: NSObject {}
+#endif
 #endif
