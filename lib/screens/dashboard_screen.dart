@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -36,38 +37,46 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         (DashboardState? prev, DashboardState next) {
       if (!mounted) return;
       if (next.errorMessage != null && next.errorMessage!.isNotEmpty) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text(next.errorMessage!)),
-          );
-        ref.read(dashboardControllerProvider.notifier).clearError();
+        showCupertinoDialog<void>(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            return CupertinoAlertDialog(
+              title: const Text('Si è verificato un problema'),
+              content: Text(next.errorMessage!),
+              actions: <Widget>[
+                CupertinoDialogAction(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    ref.read(dashboardControllerProvider.notifier).clearError();
+                  },
+                  child: const Text('Ok'),
+                ),
+              ],
+            );
+          },
+        );
       }
     });
 
     final DashboardState state = ref.watch(dashboardControllerProvider);
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        bottom: false,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeOutCubic,
-          switchOutCurve: Curves.easeInCubic,
-          child: state.isLoading
-              ? const _DashboardLoadingSkeleton()
-              : _DashboardContent(
-                  state: state,
-                  selectedDate: widget.selectedDate,
-                ),
-        ),
-      ),
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: state.isLoading
+          ? const _DashboardLoadingSkeleton(key: ValueKey('dashboard_loading'))
+          : _DashboardContent(
+              key: const ValueKey('dashboard_content'),
+              state: state,
+              selectedDate: widget.selectedDate,
+            ),
     );
   }
 }
 
 class _DashboardContent extends StatelessWidget {
   const _DashboardContent({
+    super.key,
     required this.state,
     required this.selectedDate,
   });
@@ -98,7 +107,8 @@ class _DashboardContent extends StatelessWidget {
     }
 
     return ListView(
-      physics: const BouncingScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
       children: <Widget>[
         _TodaysWorkoutCard(
@@ -124,7 +134,7 @@ class _DashboardContent extends StatelessWidget {
 
   static void _startSession(BuildContext context, DailySession session) {
     Navigator.of(context).push(
-      MaterialPageRoute<void>(
+      CupertinoPageRoute<void>(
         builder: (_) => ExercisePlayerScreen(session: session),
       ),
     );
@@ -177,12 +187,13 @@ class _DashboardContent extends StatelessWidget {
 }
 
 class _DashboardLoadingSkeleton extends StatelessWidget {
-  const _DashboardLoadingSkeleton();
+  const _DashboardLoadingSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      physics: const BouncingScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
       children: const <Widget>[
         ShimmerBox(height: 120, borderRadius: 26),
@@ -391,12 +402,12 @@ class _WeekOverviewCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-      Row(
-      children: metrics
-        .map<Widget>((_OverviewMetric metric) =>
-          Expanded(child: _WeeklyMetricTile(metric: metric)))
-        .toList(growable: false),
-      ),
+          Row(
+            children: metrics
+                .map<Widget>((_OverviewMetric metric) =>
+                    Expanded(child: _WeeklyMetricTile(metric: metric)))
+                .toList(growable: false),
+          ),
         ],
       ),
     );
@@ -585,7 +596,8 @@ class _PremiumContentHighlight extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _mockMasterclasses.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 16),
+      separatorBuilder: (BuildContext context, int index) =>
+        const SizedBox(width: 16),
             itemBuilder: (BuildContext context, int index) {
               final _MasterclassPreview masterclass = _mockMasterclasses[index];
               return SizedBox(

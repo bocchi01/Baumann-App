@@ -40,7 +40,8 @@ class SpecialistsScreen extends ConsumerWidget {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             itemCount: data.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
+      separatorBuilder: (BuildContext context, int index) =>
+        const SizedBox(height: 16),
             itemBuilder: (BuildContext context, int index) {
               final Specialist specialist = data[index];
               return _SpecialistCard(specialist: specialist);

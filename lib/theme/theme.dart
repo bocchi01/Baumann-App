@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 // --------------------------------------------------
@@ -146,18 +147,54 @@ class AppTheme {
       ),
     );
   }
+
+  static CupertinoThemeData get cupertinoThemeData {
+    return CupertinoThemeData(
+      primaryColor: baumannPrimaryBlue,
+      primaryContrastingColor: Colors.white,
+      scaffoldBackgroundColor: background,
+      barBackgroundColor: background,
+      textTheme: const CupertinoTextThemeData(
+        textStyle: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 16,
+          color: textPrimary,
+        ),
+        navLargeTitleTextStyle: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 34,
+          fontWeight: FontWeight.w700,
+          color: textPrimary,
+          letterSpacing: -0.5,
+        ),
+        navTitleTextStyle: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 17,
+          fontWeight: FontWeight.w600,
+          color: textPrimary,
+        ),
+        tabLabelTextStyle: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: textSecondary,
+        ),
+        actionTextStyle: TextStyle(
+          fontFamily: _fontFamily,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: baumannPrimaryBlue,
+        ),
+      ),
+    );
+  }
 }
 
 extension ColorWithValues on Color {
   /// Replica l'API sperimentale `withValues` delle versioni più recenti di Flutter.
   /// Permette di aggiornare selettivamente i componenti del colore garantendo
   /// compatibilità con gli SDK stabili.
-  Color withValues({
-    double? alpha,
-    double? red,
-    double? green,
-    double? blue,
-  }) {
+  Color withValues({double? alpha, double? red, double? green, double? blue}) {
     int resolveComponent(double? component, double original) {
       final double effective = component ?? original;
       final double normalized = effective > 1 ? effective / 255 : effective;

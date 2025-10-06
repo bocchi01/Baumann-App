@@ -5,15 +5,11 @@ class CommunityScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Text(
-            'La community Baumann sta arrivando!'
-            '\nResta sintonizzato per le novità.',
-            textAlign: TextAlign.center,
-          ),
-        ),
+    return const Center(
+      child: Text(
+        'La community Baumann sta arrivando!'
+        '\nResta sintonizzato per le novità.',
+        textAlign: TextAlign.center,
       ),
     );
   }

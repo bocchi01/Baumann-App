@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -30,11 +31,24 @@ class _MyPathScreenState extends ConsumerState<MyPathScreen> {
     ref.listen<MyPathState>(myPathControllerProvider,
         (MyPathState? previous, MyPathState next) {
       if (next.errorMessage != null && next.errorMessage!.isNotEmpty) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text(next.errorMessage!)),
-          );
+        showCupertinoDialog<void>(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            return CupertinoAlertDialog(
+              title: const Text('Si è verificato un problema'),
+              content: Text(next.errorMessage!),
+              actions: <Widget>[
+                CupertinoDialogAction(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    ref.read(myPathControllerProvider.notifier).clearError();
+                  },
+                  child: const Text('Ok'),
+                ),
+              ],
+            );
+          },
+        );
       }
     });
 
@@ -42,21 +56,24 @@ class _MyPathScreenState extends ConsumerState<MyPathScreen> {
     final MyPathController controller =
         ref.read(myPathControllerProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Il Mio Percorso'),
-      ),
-      body: SafeArea(
-        child: state.isLoading && !state.hasData
-            ? const _MyPathLoadingSkeleton()
-            : state.path == null
-                ? _EmptyPlaceholder(onRetry: controller.fetchPath)
-                : _PathContent(
-                    path: state.path!,
-                    state: state,
-                    controller: controller,
-                  ),
-      ),
+    final Widget body;
+    if (state.isLoading && !state.hasData) {
+      body = const _MyPathLoadingSkeleton();
+    } else if (state.path == null) {
+      body = _EmptyPlaceholder(onRetry: controller.fetchPath);
+    } else {
+      body = _PathContent(
+        path: state.path!,
+        state: state,
+        controller: controller,
+      );
+    }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: body,
     );
   }
 }
@@ -67,11 +84,14 @@ class _MyPathLoadingSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       itemBuilder: (BuildContext context, int index) {
         return const ShimmerBox(height: 96, borderRadius: 18);
       },
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
+    separatorBuilder: (BuildContext context, int index) =>
+      const SizedBox(height: 16),
       itemCount: 6,
     );
   }
@@ -95,6 +115,8 @@ class _PathContent extends StatelessWidget {
     final String? nextSessionId = controller.resolveNextSessionId();
 
     return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       children: <Widget>[
         Text(
@@ -274,7 +296,7 @@ class _DailySessionListItem extends StatelessWidget {
       ),
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute<void>(
+          CupertinoPageRoute<void>(
             builder: (_) => ExercisePlayerScreen(session: session),
           ),
         );
@@ -298,7 +320,7 @@ class _EmptyPlaceholder extends StatelessWidget {
           const SizedBox(height: 16),
           const Text('Percorso non disponibile al momento.'),
           const SizedBox(height: 16),
-          ElevatedButton(
+          CupertinoButton.filled(
             onPressed: onRetry,
             child: const Text('Riprova'),
           ),

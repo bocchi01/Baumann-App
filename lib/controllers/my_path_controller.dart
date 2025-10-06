@@ -102,4 +102,10 @@ class MyPathController extends Notifier<MyPathState> {
     }
     return message;
   }
+
+  void clearError() {
+    if (state.errorMessage != null) {
+      state = state.copyWith(clearError: true);
+    }
+  }
 }

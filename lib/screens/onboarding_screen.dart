@@ -240,7 +240,8 @@ class _QuestionLayout extends StatelessWidget {
         Expanded(
           child: ListView.separated(
             itemCount: options.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (BuildContext context, int index) =>
+        const SizedBox(height: 12),
             itemBuilder: (BuildContext context, int index) {
               final _AnswerOption option = options[index];
               final bool isSelected = option.value == selectedValue;

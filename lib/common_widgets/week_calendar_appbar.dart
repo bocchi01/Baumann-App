@@ -63,7 +63,7 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
     'G',
     'V',
     'S',
-    'D'
+    'D',
   ];
 
   @override
@@ -86,8 +86,9 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final DateTime startOfWeek =
-        _focusDay.subtract(Duration(days: _focusDay.weekday - 1));
+    final DateTime startOfWeek = _focusDay.subtract(
+      Duration(days: _focusDay.weekday - 1),
+    );
     final DateTime today = DateTime.now();
 
     return AppBar(
@@ -127,8 +128,9 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                       Text(
                         widget.greeting,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.65),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.65,
+                          ),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -147,8 +149,9 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color:
-                              theme.colorScheme.primary.withValues(alpha: 0.1),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Row(
@@ -190,8 +193,9 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                 final DateTime day = startOfWeek.add(Duration(days: index));
                 final bool isSelected = _isSameDate(day, _selectedDay);
                 final bool isToday = _isSameDate(day, today);
-                final bool hasWorkout =
-                    widget.weekdayWithWorkout.contains(day.weekday);
+                final bool hasWorkout = widget.weekdayWithWorkout.contains(
+                  day.weekday,
+                );
 
                 return Expanded(
                   child: GestureDetector(
@@ -220,8 +224,9 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: isSelected || isToday
                                   ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.6),
+                                  : theme.colorScheme.onSurface.withValues(
+                                      alpha: 0.6,
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -233,9 +238,10 @@ class _WeekCalendarAppBarState extends State<WeekCalendarAppBar> {
                               color: isSelected
                                   ? theme.colorScheme.primary
                                   : (isToday
-                                      ? theme.colorScheme.primary
-                                          .withValues(alpha: 0.1)
-                                      : theme.colorScheme.surface),
+                                        ? theme.colorScheme.primary.withValues(
+                                            alpha: 0.1,
+                                          )
+                                        : theme.colorScheme.surface),
                               border: isToday && !isSelected
                                   ? Border.all(color: theme.colorScheme.primary)
                                   : null,

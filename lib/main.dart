@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'firebase_options.dart';
@@ -11,20 +13,22 @@ import 'utils/network_probe.dart';
 
 final FutureProvider<void> firebaseInitializationProvider =
     FutureProvider<void>((Ref ref) {
-  return Future<void>(() async {
-    final Stopwatch? stopwatch = kDebugMode ? (Stopwatch()..start()) : null;
+      return Future<void>(() async {
+        final Stopwatch? stopwatch = kDebugMode ? (Stopwatch()..start()) : null;
 
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
 
-    if (stopwatch != null) {
-      stopwatch.stop();
-      debugPrint('[Bootstrap] Firebase initialized in '
-          '${stopwatch.elapsedMilliseconds}ms');
-    }
-  });
-});
+        if (stopwatch != null) {
+          stopwatch.stop();
+          debugPrint(
+            '[Bootstrap] Firebase initialized in '
+            '${stopwatch.elapsedMilliseconds}ms',
+          );
+        }
+      });
+    });
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,14 +44,30 @@ class PostureApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<void> firebaseInit =
-        ref.watch(firebaseInitializationProvider);
+    final AsyncValue<void> firebaseInit = ref.watch(
+      firebaseInitializationProvider,
+    );
 
-    return MaterialApp(
+    return CupertinoApp(
       title: 'Posture Coach',
       navigatorKey: appNavigatorKey,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.themeData,
+      theme: AppTheme.cupertinoThemeData,
+      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const <Locale>[Locale('en'), Locale('it')],
+      builder: (BuildContext context, Widget? child) {
+        if (child == null) {
+          return const SizedBox.shrink();
+        }
+        return Theme(
+          data: AppTheme.themeData,
+          child: Material(type: MaterialType.transparency, child: child),
+        );
+      },
       home: firebaseInit.when(
         data: (_) => const AuthWrapper(),
         loading: () => const _FirebaseLoadingScreen(),
@@ -68,10 +88,8 @@ class _FirebaseLoadingScreen extends StatelessWidget {
     if (kDebugMode) {
       debugPrint('[Bootstrap] Rendering Firebase loading screen.');
     }
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
+    return const CupertinoPageScaffold(
+      child: Center(child: CupertinoActivityIndicator()),
     );
   }
 }
@@ -84,37 +102,39 @@ class _FirebaseErrorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextTheme textTheme = theme.textTheme;
+    final CupertinoThemeData theme = CupertinoTheme.of(context);
+    final TextStyle baseStyle = theme.textTheme.textStyle;
 
-    return Scaffold(
-      body: Center(
+    return CupertinoPageScaffold(
+      child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Icon(
-                Icons.error_outline,
+                CupertinoIcons.exclamationmark_circle,
                 size: 48,
-                color: theme.colorScheme.error,
+                color: theme.primaryColor,
               ),
               const SizedBox(height: 16),
               Text(
                 'Impossibile inizializzare l\'app',
-                style: textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: baseStyle.copyWith(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.baumannPrimaryBlue,
                 ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
                 error.toString(),
-                style: textTheme.bodyMedium,
+                style: baseStyle.copyWith(color: AppTheme.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
+              CupertinoButton.filled(
                 onPressed: onRetry,
                 child: const Text('Riprova'),
               ),

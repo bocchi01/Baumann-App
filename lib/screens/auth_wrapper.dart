@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../theme/theme.dart';
 import 'auth_screen.dart';
 import 'main_screen.dart';
 import 'onboarding_screen.dart';
@@ -85,8 +86,8 @@ class _LoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+    return const CupertinoPageScaffold(
+      child: Center(child: CupertinoActivityIndicator()),
     );
   }
 }
@@ -99,38 +100,42 @@ class _ErrorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
+    final CupertinoThemeData theme = CupertinoTheme.of(context);
+    final TextStyle baseStyle = theme.textTheme.textStyle;
+
+    return CupertinoPageScaffold(
+      child: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Icon(Icons.error_outline,
-                  color: Colors.redAccent, size: 42),
+              Icon(
+                CupertinoIcons.exclamationmark_circle,
+                size: 44,
+                color: theme.primaryColor,
+              ),
               const SizedBox(height: 16),
               Text(
                 'Si è verificato un errore durante il caricamento del profilo.',
                 textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: baseStyle.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 12),
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: Colors.black54),
+                style: baseStyle.copyWith(
+                  color: AppTheme.textSecondary,
+                ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton.icon(
+              CupertinoButton.filled(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Riprova'),
+                child: const Text('Riprova'),
               ),
             ],
           ),
