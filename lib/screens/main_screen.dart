@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../common_widgets/glass_bottom_nav.dart';
 import '../controllers/profile_controller.dart';
 import '../models/user_model.dart';
+import '../native_glass_tab_bar.dart';
 import '../theme/theme.dart';
 import 'activity_screen.dart';
 import 'community_screen.dart';
@@ -115,11 +115,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final String greeting = _resolveGreeting();
     final String dateLabel = _formatSelectedDate(_selectedDay);
 
-    // Build the pages
-    final Widget currentPage;
-    switch (_currentIndex) {
-      case 0:
-        currentPage = _HomeTab(
+    // Build pages con hide-on-scroll wrapper
+    final List<Widget> pages = <Widget>[
+      NativeTabBarScrollWrapper(
+        child: _HomeTab(
           onScrollNotification: _handleUserScrollNotification,
           selectedDay: _selectedDay,
           greeting: greeting,
@@ -131,76 +130,41 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           onOpenSettings: () => _openSettings(context),
           onShowComingSoon: (String feature) =>
               _showComingSoon(context, feature),
-        );
-        break;
-      case 1:
-        currentPage = _ProgramTab(
+        ),
+      ),
+      NativeTabBarScrollWrapper(
+        child: _ProgramTab(
           onScrollNotification: _handleUserScrollNotification,
-        );
-        break;
-      case 2:
-        currentPage = _ActivityTab(
+        ),
+      ),
+      NativeTabBarScrollWrapper(
+        child: _ActivityTab(
           onScrollNotification: _handleUserScrollNotification,
-        );
-        break;
-      case 3:
-      default:
-        currentPage = _CommunityTab(
+        ),
+      ),
+      NativeTabBarScrollWrapper(
+        child: _CommunityTab(
           onScrollNotification: _handleUserScrollNotification,
-        );
-    }
+        ),
+      ),
+    ];
 
-    return Stack(
-      children: <Widget>[
-        // Content with bottom padding to avoid overlap
-        Positioned.fill(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 80),
-            child: currentPage,
-          ),
-        ),
-        // Glass bottom navigation bar
-        Positioned.fill(
-          child: GlassBottomBar(
-            items: const <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.house),
-                activeIcon: Icon(CupertinoIcons.house_fill),
-                label: 'Home',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.book),
-                activeIcon: Icon(CupertinoIcons.book_fill),
-                label: 'Programma',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.flame),
-                activeIcon: Icon(CupertinoIcons.flame_fill),
-                label: 'Attività',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(CupertinoIcons.person_2),
-                activeIcon: Icon(CupertinoIcons.person_2_fill),
-                label: 'Community',
-              ),
-            ],
-            currentIndex: _currentIndex,
-            onTap: (int index) {
-              if (_currentIndex == index) {
-                return;
-              }
-              setState(() {
-                _isTabBarVisible = true;
-                _currentIndex = index;
-                _tabController.index = index;
-              });
-            },
-            reduceTransparency: false,
-            enableParallax: true,
-            enableEdgeGlow: true,
-          ),
-        ),
+    return NativeGlassTabScaffold(
+      tabs: const <NativeTabItem>[
+        NativeTabItem(title: 'Home', systemIcon: 'house'),
+        NativeTabItem(title: 'Programma', systemIcon: 'book'),
+        NativeTabItem(title: 'Attività', systemIcon: 'flame'),
+        NativeTabItem(title: 'Community', systemIcon: 'person.2'),
       ],
+      pages: pages,
+      initialIndex: _currentIndex,
+      onIndexChanged: (int index) {
+        setState(() {
+          _isTabBarVisible = true;
+          _currentIndex = index;
+          _tabController.index = index;
+        });
+      },
     );
   }
 

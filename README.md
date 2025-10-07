@@ -15,11 +15,18 @@ Flutter prototype featuring immutable data models and a complete authentication 
 flutter pub get
 ```
 
-### Liquid Glass & iOS 26 upgrade
+### Native iOS Glass Tab Bar (iOS 26)
 
-- The project now ships with a floating tab bar and navigation chrome tuned for the Liquid Glass aesthetic. Dynamic colors live in `AppTheme.liquidGlass*`, and the blur/gradient layering happens inside `_HidableCupertinoTabBar`.
-- Cupertino scaffolds resolve their background against the Liquid Glass surface so system translucency can shine through. Avoid painting opaque `backgroundColor`s on navigation, tab, or toolbar widgets.
-- Follow the [Liquid Glass Migration Guide](docs/liquid_glass_migration.md) for the full checklist—including the native Xcode 26 project migration steps and design references.
+- **100% native UITabBar** with hardware-accelerated blur (`UIBlurEffect.systemThinMaterial`)
+- **Platform Channels**: Swift ↔️ Dart communication via `glass_tab_bar` Method Channel
+- **Floating design**: 8px gap dal bordo, corner radius 22px, shadow elevation
+- **Hide-on-scroll**: Automatico con `NativeTabBarScrollWrapper`
+- **Accessibility**: Reduce Transparency, High Contrast, VoiceOver support
+- **SF Symbols**: Icone native iOS (`house`, `book`, `flame`, `person.2`)
+
+Dynamic colors live in `AppTheme.liquidGlass*`. Cupertino scaffolds resolve their background against the Liquid Glass surface so system translucency can shine through.
+
+📖 **Documentazione completa**: [Native Glass Tab Bar Migration Guide](docs/native_glass_tab_bar_migration.md)
 
 ### Fonts
 
