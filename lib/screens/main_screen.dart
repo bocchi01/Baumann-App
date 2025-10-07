@@ -321,27 +321,32 @@ class _HidableCupertinoTabBar extends CupertinoTabBar {
 
   @override
   Widget build(BuildContext context) {
-    final double bottomInset = MediaQuery.of(context).padding.bottom;
-    final double targetHeight = isVisible
-        ? kBottomNavigationBarHeight +
-              (_verticalPadding * 2) +
-              bottomInset +
-              _floatingGap
-        : 0;
+    final EdgeInsets targetPadding = isVisible
+        ? EdgeInsets.only(
+            left: _horizontalPadding,
+            right: _horizontalPadding,
+            bottom: _floatingGap,
+          )
+        : EdgeInsets.only(
+            left: _horizontalPadding,
+            right: _horizontalPadding,
+            bottom: 0,
+          );
 
     final Color resolvedBackground = CupertinoDynamicColor.resolve(
-      CupertinoColors.systemGrey6,
+      AppTheme.liquidGlassTint,
       context,
-    ).withValues(alpha: 0.75);
-    final Color resolvedShadow = CupertinoDynamicColor.resolve(
-      CupertinoColors.black,
-      context,
-    ).withValues(alpha: 0.12);
-
+    ).withValues(alpha: 0.68);
     final Color resolvedBorderColor = CupertinoDynamicColor.resolve(
-      CupertinoColors.separator,
+      AppTheme.liquidGlassBorder,
       context,
-    ).withValues(alpha: 0.15);
+    );
+    final Color resolvedShadow = CupertinoDynamicColor.resolve(
+      AppTheme.liquidGlassShadow,
+      context,
+    );
+    final Color resolvedHighlight = resolvedBackground.withValues(alpha: 0.42);
+    final Color resolvedLowlight = resolvedShadow.withValues(alpha: 0.18);
     final Color resolvedActiveColor = CupertinoDynamicColor.resolve(
       _effectiveActiveColor,
       context,
@@ -351,71 +356,110 @@ class _HidableCupertinoTabBar extends CupertinoTabBar {
       context,
     );
 
-    return AnimatedContainer(
+    return AnimatedPadding(
       duration: duration,
       curve: curve,
-      height: targetHeight,
-      padding: EdgeInsets.fromLTRB(
-        _horizontalPadding,
-        _verticalPadding,
-        _horizontalPadding,
-        _verticalPadding + bottomInset,
-      ),
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: IgnorePointer(
-          ignoring: !isVisible,
-          child: AnimatedOpacity(
-            opacity: isVisible ? 1 : 0,
-            duration: duration,
-            curve: curve,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: _barRadius,
-                boxShadow: <BoxShadow>[
-                  BoxShadow(
-                    color: resolvedShadow,
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                    spreadRadius: 0,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: _barRadius,
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(
-                    sigmaX: _blurSigma,
-                    sigmaY: _blurSigma,
-                    tileMode: TileMode.clamp,
-                  ),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: resolvedBackground,
-                      borderRadius: _barRadius,
-                      border: Border.all(
-                        color: resolvedBorderColor,
-                        width: 0.5,
+      padding: targetPadding,
+      child: SafeArea(
+        top: false,
+        bottom: true,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: _verticalPadding),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: IgnorePointer(
+              ignoring: !isVisible,
+              child: AnimatedOpacity(
+                opacity: isVisible ? 1 : 0,
+                duration: duration,
+                curve: curve,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: _barRadius,
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: resolvedShadow.withValues(alpha: 0.24),
+                        blurRadius: 40,
+                        offset: const Offset(0, 22),
+                        spreadRadius: -10,
                       ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: _barRadius,
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: _blurSigma,
+                        sigmaY: _blurSigma,
+                        tileMode: TileMode.clamp,
                       ),
-                      child: _FloatingTabRow(
-                        items: items,
-                        currentIndex: currentIndex,
-                        iconSize: iconSize,
-                        activeColor: resolvedActiveColor,
-                        inactiveColor: resolvedInactiveColor,
-                        itemSpacing: _itemSpacing,
-                        itemHorizontalPadding: _itemHorizontalPadding,
-                        itemVerticalPadding: _itemVerticalPadding,
-                        itemRadius: _itemRadius,
-                        duration: _itemAnimationDuration,
-                        curve: _itemAnimationCurve,
-                        onPressed: onTap,
+                      child: Stack(
+                        children: <Widget>[
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                color: resolvedBackground,
+                                borderRadius: _barRadius,
+                                border: Border.all(
+                                  color: resolvedBorderColor,
+                                  width: 0.7,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: _barRadius,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: <Color>[
+                                    resolvedHighlight,
+                                    resolvedBackground.withValues(alpha: 0.18),
+                                    resolvedBackground.withValues(alpha: 0.04),
+                                  ],
+                                  stops: const <double>[0, 0.55, 1],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned.fill(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: _barRadius,
+                                gradient: LinearGradient(
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                  colors: <Color>[
+                                    resolvedLowlight,
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
+                            child: _FloatingTabRow(
+                              items: items,
+                              currentIndex: currentIndex,
+                              iconSize: iconSize,
+                              activeColor: resolvedActiveColor,
+                              inactiveColor: resolvedInactiveColor,
+                              itemSpacing: _itemSpacing,
+                              itemHorizontalPadding: _itemHorizontalPadding,
+                              itemVerticalPadding: _itemVerticalPadding,
+                              itemRadius: _itemRadius,
+                              duration: _itemAnimationDuration,
+                              curve: _itemAnimationCurve,
+                              onPressed: onTap,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -617,37 +661,46 @@ class _HomeTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final Color pageBackground = CupertinoDynamicColor.resolve(
+      AppTheme.liquidGlassBackground,
+      context,
+    );
+    final double topInset = MediaQuery.of(context).padding.top;
+    final TextStyle navTitleStyle = CupertinoTheme.of(context)
+        .textTheme
+        .navTitleTextStyle
+        .copyWith(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.textPrimary,
+          letterSpacing: -0.2,
+        );
 
     return NotificationListener<UserScrollNotification>(
       onNotification: onScrollNotification,
       child: CupertinoPageScaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: pageBackground,
         child: CustomScrollView(
           slivers: <Widget>[
-            CupertinoSliverNavigationBar(
-              largeTitle: const Text('Home'),
+            _GlassNavigationBar(
+              topInset: topInset,
+              title: Text('Home', style: navTitleStyle),
               leading: _AvatarButton(
                 initials: avatarInitials,
                 onTap: onOpenSettings,
               ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size.square(32),
-                    onPressed: () => onShowComingSoon('Notifiche'),
-                    child: const Icon(CupertinoIcons.bell),
-                  ),
-                  const SizedBox(width: 4),
-                  CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    minimumSize: const Size.square(32),
-                    onPressed: () => onShowComingSoon('Report giornaliero'),
-                    child: const Icon(CupertinoIcons.chart_bar_alt_fill),
-                  ),
-                ],
-              ),
+              trailing: <Widget>[
+                _GlassIconButton(
+                  icon: CupertinoIcons.bell,
+                  semanticLabel: 'Notifiche',
+                  onPressed: () => onShowComingSoon('Notifiche'),
+                ),
+                _GlassIconButton(
+                  icon: CupertinoIcons.chart_bar_alt_fill,
+                  semanticLabel: 'Report giornaliero',
+                  onPressed: () => onShowComingSoon('Report giornaliero'),
+                ),
+              ],
             ),
             SliverToBoxAdapter(
               child: Padding(
@@ -701,15 +754,31 @@ class _ProgramTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final Color pageBackground = CupertinoDynamicColor.resolve(
+      AppTheme.liquidGlassBackground,
+      context,
+    );
+    final double topInset = MediaQuery.of(context).padding.top;
+    final TextStyle navTitleStyle = CupertinoTheme.of(context)
+        .textTheme
+        .navTitleTextStyle
+        .copyWith(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.textPrimary,
+          letterSpacing: -0.2,
+        );
 
     return NotificationListener<UserScrollNotification>(
       onNotification: onScrollNotification,
       child: CupertinoPageScaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: pageBackground,
         child: CustomScrollView(
           slivers: <Widget>[
-            const CupertinoSliverNavigationBar(largeTitle: Text('Programma')),
+            _GlassNavigationBar(
+              topInset: topInset,
+              title: Text('Programma', style: navTitleStyle),
+            ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
               sliver: SliverToBoxAdapter(child: const MyPathScreen()),
@@ -728,19 +797,35 @@ class _ActivityTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final Color pageBackground = CupertinoDynamicColor.resolve(
+      AppTheme.liquidGlassBackground,
+      context,
+    );
+    final double topInset = MediaQuery.of(context).padding.top;
+    final TextStyle navTitleStyle = CupertinoTheme.of(context)
+        .textTheme
+        .navTitleTextStyle
+        .copyWith(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.textPrimary,
+          letterSpacing: -0.2,
+        );
 
     return NotificationListener<UserScrollNotification>(
       onNotification: onScrollNotification,
       child: CupertinoPageScaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: pageBackground,
         child: CustomScrollView(
-          slivers: const <Widget>[
-            CupertinoSliverNavigationBar(largeTitle: Text('Attività')),
+          slivers: <Widget>[
+            _GlassNavigationBar(
+              topInset: topInset,
+              title: Text('Attività', style: navTitleStyle),
+            ),
             SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: ActivityScreen(),
               ),
             ),
@@ -758,23 +843,285 @@ class _CommunityTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
+    final Color pageBackground = CupertinoDynamicColor.resolve(
+      AppTheme.liquidGlassBackground,
+      context,
+    );
+    final double topInset = MediaQuery.of(context).padding.top;
+    final TextStyle navTitleStyle = CupertinoTheme.of(context)
+        .textTheme
+        .navTitleTextStyle
+        .copyWith(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: AppTheme.textPrimary,
+          letterSpacing: -0.2,
+        );
 
     return NotificationListener<UserScrollNotification>(
       onNotification: onScrollNotification,
       child: CupertinoPageScaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
+        backgroundColor: pageBackground,
         child: CustomScrollView(
-          slivers: const <Widget>[
-            CupertinoSliverNavigationBar(largeTitle: Text('Community')),
+          slivers: <Widget>[
+            _GlassNavigationBar(
+              topInset: topInset,
+              title: Text('Community', style: navTitleStyle),
+            ),
             SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: CommunityScreen(),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GlassNavigationBar extends StatelessWidget {
+  const _GlassNavigationBar({
+    required this.topInset,
+    required this.title,
+    this.leading,
+    this.trailing = const <Widget>[],
+  });
+
+  final double topInset;
+  final Widget title;
+  final Widget? leading;
+  final List<Widget> trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverPersistentHeader(
+      floating: true,
+      pinned: true,
+      delegate: _GlassNavigationBarDelegate(
+        topInset: topInset,
+        title: title,
+        leading: leading,
+        trailing: List<Widget>.unmodifiable(trailing),
+      ),
+    );
+  }
+}
+
+class _GlassNavigationBarDelegate extends SliverPersistentHeaderDelegate {
+  _GlassNavigationBarDelegate({
+    required this.topInset,
+    required this.title,
+    required this.trailing,
+    this.leading,
+  });
+
+  final double topInset;
+  final Widget title;
+  final Widget? leading;
+  final List<Widget> trailing;
+
+  static const double _barHeight = 64;
+  static const double _topPadding = 12;
+  static const double _bottomPadding = 18;
+  static const BorderRadius _radius = BorderRadius.all(Radius.circular(26));
+
+  @override
+  double get minExtent => topInset + _topPadding + _barHeight + _bottomPadding;
+
+  @override
+  double get maxExtent => minExtent;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    final Color resolvedBackground = CupertinoDynamicColor.resolve(
+      AppTheme.liquidGlassTint,
+      context,
+    ).withValues(alpha: 0.86);
+    final Color resolvedBorder = CupertinoDynamicColor.resolve(
+      AppTheme.liquidGlassBorder,
+      context,
+    ).withValues(alpha: 0.9);
+    final Color resolvedShadow = CupertinoDynamicColor.resolve(
+      AppTheme.liquidGlassShadow,
+      context,
+    ).withValues(alpha: 0.33);
+    final Color resolvedHighlight = resolvedBackground.withValues(alpha: 0.55);
+    final Color resolvedLowlight = resolvedShadow.withValues(alpha: 0.2);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        topInset + _topPadding,
+        20,
+        _bottomPadding,
+      ),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: _radius,
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: resolvedShadow,
+              blurRadius: 36,
+              offset: const Offset(0, 20),
+              spreadRadius: -12,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: _radius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: 28,
+              sigmaY: 28,
+              tileMode: TileMode.clamp,
+            ),
+            child: Stack(
+              children: <Widget>[
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: resolvedBackground,
+                      borderRadius: _radius,
+                      border: Border.all(color: resolvedBorder, width: 0.9),
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: _radius,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: <Color>[
+                          resolvedHighlight,
+                          resolvedBackground.withValues(alpha: 0.3),
+                          resolvedBackground.withValues(alpha: 0.08),
+                        ],
+                        stops: const <double>[0, 0.5, 1],
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: _radius,
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: <Color>[resolvedLowlight, Colors.transparent],
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      if (leading != null) ...<Widget>[
+                        leading!,
+                        const SizedBox(width: 14),
+                      ],
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: DefaultTextStyle.merge(
+                            style: CupertinoTheme.of(context)
+                                .textTheme
+                                .navTitleTextStyle
+                                .copyWith(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.textPrimary,
+                                  letterSpacing: -0.2,
+                                ),
+                            child: title,
+                          ),
+                        ),
+                      ),
+                      if (trailing.isNotEmpty) ...<Widget>[
+                        const SizedBox(width: 16),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            for (
+                              int index = 0;
+                              index < trailing.length;
+                              index++
+                            ) ...<Widget>[
+                              if (index != 0) const SizedBox(width: 10),
+                              trailing[index],
+                            ],
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _GlassNavigationBarDelegate oldDelegate) {
+    return true;
+  }
+}
+
+class _GlassIconButton extends StatelessWidget {
+  const _GlassIconButton({
+    required this.icon,
+    required this.onPressed,
+    this.semanticLabel,
+  });
+
+  final IconData icon;
+  final VoidCallback onPressed;
+  final String? semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color resolvedFill = CupertinoDynamicColor.resolve(
+      AppTheme.liquidGlassTint,
+      context,
+    ).withValues(alpha: 0.32);
+    final BorderRadius radius = const BorderRadius.all(Radius.circular(14));
+
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      minimumSize: const Size.square(36),
+      onPressed: onPressed,
+      child: Semantics(
+        button: true,
+        label: semanticLabel,
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: resolvedFill,
+            borderRadius: radius,
+            border: Border.all(
+              color: resolvedFill.withValues(alpha: 0.6),
+              width: 0.7,
+            ),
+          ),
+          child: Icon(icon, size: 18, color: AppTheme.baumannPrimaryBlue),
         ),
       ),
     );

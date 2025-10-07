@@ -10,6 +10,34 @@ import 'package:flutter/material.dart';
 class AppTheme {
   static const String _fontFamily = 'Montserrat';
 
+  /// Base surface color inspired by the iOS Liquid Glass system background.
+  static const CupertinoDynamicColor liquidGlassBackground =
+      CupertinoDynamicColor.withBrightness(
+        color: Color(0xFFF7F9FB),
+        darkColor: Color(0xFF0B0E13),
+      );
+
+  /// Subtle tint applied to glass surfaces to keep highlights legible.
+  static const CupertinoDynamicColor liquidGlassTint =
+      CupertinoDynamicColor.withBrightness(
+        color: Color(0xCCFFFFFF),
+        darkColor: Color(0x99FFFFFF),
+      );
+
+  /// Soft border color matching the system glass chroma separation.
+  static const CupertinoDynamicColor liquidGlassBorder =
+      CupertinoDynamicColor.withBrightness(
+        color: Color(0x40FFFFFF),
+        darkColor: Color(0x59FFFFFF),
+      );
+
+  /// Shadow color used to lift floating glass elements from content.
+  static const CupertinoDynamicColor liquidGlassShadow =
+      CupertinoDynamicColor.withBrightness(
+        color: Color(0x330A162E),
+        darkColor: Color(0x66000000),
+      );
+
   // --- PALETTE COLORI UFFICIALE ---
 
   /// Colore primario: il blu istituzionale estratto dal banner ufficiale.
@@ -40,13 +68,13 @@ class AppTheme {
     return ThemeData(
       // Impostazioni colori principali
       primaryColor: baumannPrimaryBlue,
-      scaffoldBackgroundColor: background,
+      scaffoldBackgroundColor: liquidGlassBackground,
       fontFamily: _fontFamily,
       colorScheme: const ColorScheme.light(
         primary: baumannPrimaryBlue,
         secondary: baumannSecondaryBlue,
         tertiary: baumannAccentOrange,
-        surface: background,
+        surface: liquidGlassBackground,
         onSurface: textPrimary,
         error: Colors.redAccent,
         onPrimary: Colors.white,
@@ -87,7 +115,8 @@ class AppTheme {
 
       // Stile per le AppBar
       appBarTheme: const AppBarTheme(
-        backgroundColor: background,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         iconTheme: IconThemeData(color: baumannPrimaryBlue),
@@ -152,8 +181,7 @@ class AppTheme {
     return CupertinoThemeData(
       primaryColor: baumannPrimaryBlue,
       primaryContrastingColor: Colors.white,
-      scaffoldBackgroundColor: background,
-      barBackgroundColor: background,
+      scaffoldBackgroundColor: liquidGlassBackground,
       textTheme: const CupertinoTextThemeData(
         textStyle: TextStyle(
           fontFamily: _fontFamily,

@@ -15,6 +15,12 @@ Flutter prototype featuring immutable data models and a complete authentication 
 flutter pub get
 ```
 
+### Liquid Glass & iOS 26 upgrade
+
+- The project now ships with a floating tab bar and navigation chrome tuned for the Liquid Glass aesthetic. Dynamic colors live in `AppTheme.liquidGlass*`, and the blur/gradient layering happens inside `_HidableCupertinoTabBar`.
+- Cupertino scaffolds resolve their background against the Liquid Glass surface so system translucency can shine through. Avoid painting opaque `backgroundColor`s on navigation, tab, or toolbar widgets.
+- Follow the [Liquid Glass Migration Guide](docs/liquid_glass_migration.md) for the full checklist—including the native Xcode 26 project migration steps and design references.
+
 ### Fonts
 
 Google Fonts runtime fetching is enabled so the Montserrat family loads automatically at startup. If you need an offline build, bundle the fonts once with:
