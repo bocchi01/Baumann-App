@@ -15,18 +15,47 @@ Flutter prototype featuring immutable data models and a complete authentication 
 flutter pub get
 ```
 
-### Native iOS Glass Tab Bar (iOS 26)
+### iOS 26 Native System UI Integration
 
-- **100% native UITabBar** with hardware-accelerated blur (`UIBlurEffect.systemThinMaterial`)
-- **Platform Channels**: Swift ↔️ Dart communication via `glass_tab_bar` Method Channel
-- **Floating design**: 8px gap dal bordo, corner radius 22px, shadow elevation
-- **Hide-on-scroll**: Automatico con `NativeTabBarScrollWrapper`
-- **Accessibility**: Reduce Transparency, High Contrast, VoiceOver support
-- **SF Symbols**: Icone native iOS (`house`, `book`, `flame`, `person.2`)
+**Architettura ibrida**: Flutter per il contenuto + UIKit nativo per tutti i componenti di sistema.
+
+#### Componenti Implementati
+
+1. **Native Glass Tab Bar** (UITabBar)
+   - Hardware-accelerated blur (`UIBlurEffect.systemThinMaterial`)
+   - Floating design con gap 8px, corner radius 22px
+   - Hide-on-scroll automatico
+   - SF Symbols icons
+
+2. **Share Sheet** (UIActivityViewController)
+   - Condivisione testo, URL, immagini, file
+   - Categorie iOS 26 native (Messages, Mail, AirDrop, etc.)
+
+3. **Action Sheet & Alerts** (UIAlertController)
+   - Blur translucido nativo
+   - SF Symbols per icone azioni
+   - Styles: default, destructive, cancel
+
+4. **Date/Time Picker** (UIDatePicker)
+   - Wheels picker in sheet nativo
+   - Mode: date, time, dateTime
+   - Min/max constraints
+
+5. **Haptic Feedback** (UIFeedbackGenerator)
+   - Impact (light/medium/heavy)
+   - Selection change
+   - Notification (success/warning/error)
+
+#### Platform Channels
+
+- `glass_tab_bar`: Tab bar navigation
+- `system_ui`: Share, alerts, pickers, haptics
 
 Dynamic colors live in `AppTheme.liquidGlass*`. Cupertino scaffolds resolve their background against the Liquid Glass surface so system translucency can shine through.
 
-📖 **Documentazione completa**: [Native Glass Tab Bar Migration Guide](docs/native_glass_tab_bar_migration.md)
+📖 **Documentazione completa**:
+- [Native Glass Tab Bar Migration Guide](docs/native_glass_tab_bar_migration.md)
+- [iOS System UI Integration Guide](docs/ios_system_ui_integration.md)
 
 ### Fonts
 

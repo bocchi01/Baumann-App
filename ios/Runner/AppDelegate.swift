@@ -6,6 +6,7 @@ import FirebaseCore
 @main
 @objc class AppDelegate: FlutterAppDelegate {
   private var tabController: NativeGlassTabBarController?
+  private var systemBridge: SystemUIBridge?
 
   override func application(
     _ application: UIApplication,
@@ -61,7 +62,7 @@ import FirebaseCore
     ])
     flutterViewController.didMove(toParent: container)
 
-    // Aggiungi tab controller sopra
+    // Aggiungi tab controller sopra (view passthrough, solo tabBar intercetta tap)
     container.addChild(controller)
     container.view.addSubview(controller.view)
     controller.view.translatesAutoresizingMaskIntoConstraints = false
@@ -77,14 +78,16 @@ import FirebaseCore
     window.rootViewController = container
     window.makeKeyAndVisible()
 
-    // Setup Method Channel
-    let channel = FlutterMethodChannel(
+    // Setup Method Channels
+    
+    // 1. Glass Tab Bar Channel
+    let glassChannel = FlutterMethodChannel(
       name: "glass_tab_bar",
       binaryMessenger: flutterViewController.binaryMessenger
     )
-    controller.attachChannel(channel)
+    controller.attachChannel(glassChannel)
 
-    channel.setMethodCallHandler { [weak self] call, result in
+    glassChannel.setMethodCallHandler { [weak self] call, result in
       guard let self = self else { return }
       
       switch call.method {
@@ -119,6 +122,12 @@ import FirebaseCore
         result(FlutterMethodNotImplemented)
       }
     }
+    
+    // 2. System UI Bridge (Share, Alerts, Pickers, Haptics)
+    systemBridge = SystemUIBridge(
+      messenger: flutterViewController.binaryMessenger,
+      rootViewController: container
+    )
   }
 }
 

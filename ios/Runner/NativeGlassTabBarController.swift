@@ -63,34 +63,27 @@ final class NativeGlassTabBarController: UIViewController, UITabBarDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        // La view del controller deve essere trasparente ai tap (passthrough)
+        view.isUserInteractionEnabled = false
+        view.backgroundColor = .clear
+        
         configureAppearance()
         
+        // La tabBar invece deve intercettare i tap
+        tabBar.isUserInteractionEnabled = true
         tabBar.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tabBar)
 
-        // Layout con safe area e gap dal bordo (stile App Store)
+        // Layout senza gap (attaccata al bordo)
         NSLayoutConstraint.activate([
-            tabBar.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            tabBar.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            tabBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -8),
-            tabBar.heightAnchor.constraint(greaterThanOrEqualToConstant: 64)
+            tabBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            tabBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            tabBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            tabBar.heightAnchor.constraint(greaterThanOrEqualToConstant: 49)
         ])
 
-        // Styling avanzato: ombra pronunciata + corner radius
-        tabBar.layer.shadowColor = UIColor.black.cgColor
-        tabBar.layer.shadowOpacity = 0.25
-        tabBar.layer.shadowRadius = 12
-        tabBar.layer.shadowOffset = CGSize(width: 0, height: 8)
+        // Rimuovo corner radius e shadow per stile standard iOS
         tabBar.layer.masksToBounds = false
-        tabBar.layer.cornerRadius = 22
-        tabBar.layer.cornerCurve = .continuous
-        
-        // Clip per corner radius visibile
-        if let backgroundView = tabBar.subviews.first(where: { String(describing: type(of: $0)).contains("Background") }) {
-            backgroundView.layer.cornerRadius = 22
-            backgroundView.layer.cornerCurve = .continuous
-            backgroundView.clipsToBounds = true
-        }
     }
 
     // MARK: - Method Channel Wiring

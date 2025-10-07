@@ -159,19 +159,11 @@ class _NativeGlassTabScaffoldState extends State<NativeGlassTabScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    // Padding inferiore per la height stimata della UITabBar + gap + safe area
-    // 64 (tab bar height) + 8 (bottom margin) + 8 (extra safe space)
-    const bottomPadding = 80.0;
-
-    return CupertinoPageScaffold(
-      resizeToAvoidBottomInset: true,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: bottomPadding),
-        child: IndexedStack(
-          index: _currentIndex,
-          children: widget.pages,
-        ),
-      ),
+    // Contenuto a tutto schermo, va sotto la tab bar (che ha trasparenza)
+    // Non usiamo CupertinoPageScaffold qui per evitare nesting con gli scaffold interni
+    return IndexedStack(
+      index: _currentIndex,
+      children: widget.pages,
     );
   }
 }
