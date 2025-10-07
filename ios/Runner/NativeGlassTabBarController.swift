@@ -3,6 +3,28 @@
 import UIKit
 import Flutter
 
+/// View custom che lascia passare i tap tranne nella zona della tabBar
+private final class PassthroughView: UIView {
+    weak var targetView: UIView?
+    
+    override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+        guard let target = targetView else {
+            return nil
+        }
+        
+        // Converti le coordinate nel sistema della targetView
+        let convertedPoint = target.convert(point, from: self)
+        
+        // Se il tap è dentro la targetView, lascia che gestisca l'evento
+        if target.bounds.contains(convertedPoint) {
+            return target.hitTest(convertedPoint, with: event)
+        }
+        
+        // Altrimenti, lascia passare il tap a Flutter sotto
+        return nil
+    }
+}
+
 /// Controller nativo che mostra una UITabBar translucida con blur (stile iOS 26)
 final class NativeGlassTabBarController: UIViewController, UITabBarDelegate {
     private let tabBar = UITabBar()
@@ -60,17 +82,19 @@ final class NativeGlassTabBarController: UIViewController, UITabBarDelegate {
 
     // MARK: - Lifecycle
     
+    override func loadView() {
+        // Usa la custom PassthroughView invece di UIView standard
+        let passthroughView = PassthroughView()
+        passthroughView.backgroundColor = .clear
+        passthroughView.targetView = tabBar
+        self.view = passthroughView
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // La view del controller deve essere trasparente ai tap (passthrough)
-        view.isUserInteractionEnabled = false
-        view.backgroundColor = .clear
-        
         configureAppearance()
         
-        // La tabBar invece deve intercettare i tap
-        tabBar.isUserInteractionEnabled = true
         tabBar.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(tabBar)
 
