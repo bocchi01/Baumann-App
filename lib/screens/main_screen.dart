@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../common_widgets/glass_bottom_nav.dart';
 import '../controllers/profile_controller.dart';
 import '../models/user_model.dart';
 import '../theme/theme.dart';
@@ -25,9 +26,6 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
-  static const Duration _tabBarAnimationDuration = Duration(milliseconds: 220);
-  static const Curve _tabBarAnimationCurve = Curves.easeOutQuad;
-
   late final CupertinoTabController _tabController;
   DateTime _selectedDay = DateTime.now();
   final Set<int> _plannedWorkoutWeekdays = <int>{1, 3, 5};
@@ -117,83 +115,92 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final String greeting = _resolveGreeting();
     final String dateLabel = _formatSelectedDate(_selectedDay);
 
-    return CupertinoTabScaffold(
-      controller: _tabController,
-      tabBar: _HidableCupertinoTabBar(
-        isVisible: _isTabBarVisible,
-        duration: _tabBarAnimationDuration,
-        curve: _tabBarAnimationCurve,
-        activeColor: AppTheme.baumannPrimaryBlue,
-        inactiveColor: CupertinoColors.inactiveGray,
-        currentIndex: _currentIndex,
-        onTap: (int index) {
-          if (_currentIndex == index) {
-            return;
-          }
-          setState(() {
-            _isTabBarVisible = true;
-            _currentIndex = index;
-            _tabController.index = index;
-          });
-        },
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.home),
-            activeIcon: Icon(CupertinoIcons.house_fill),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.book),
-            activeIcon: Icon(CupertinoIcons.book_fill),
-            label: 'Programma',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.flame),
-            activeIcon: Icon(CupertinoIcons.flame_fill),
-            label: 'Attività',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.person_2),
-            activeIcon: Icon(CupertinoIcons.group_solid),
-            label: 'Community',
-          ),
-        ],
-      ),
-      tabBuilder: (BuildContext context, int index) {
-        if (_currentIndex != index) {
-          return const SizedBox.shrink();
-        }
+    // Build the pages
+    final Widget currentPage;
+    switch (_currentIndex) {
+      case 0:
+        currentPage = _HomeTab(
+          onScrollNotification: _handleUserScrollNotification,
+          selectedDay: _selectedDay,
+          greeting: greeting,
+          displayName: displayName,
+          dateLabel: dateLabel,
+          avatarInitials: initials,
+          plannedWorkoutWeekdays: _plannedWorkoutWeekdays,
+          onDaySelected: _onDaySelected,
+          onOpenSettings: () => _openSettings(context),
+          onShowComingSoon: (String feature) =>
+              _showComingSoon(context, feature),
+        );
+        break;
+      case 1:
+        currentPage = _ProgramTab(
+          onScrollNotification: _handleUserScrollNotification,
+        );
+        break;
+      case 2:
+        currentPage = _ActivityTab(
+          onScrollNotification: _handleUserScrollNotification,
+        );
+        break;
+      case 3:
+      default:
+        currentPage = _CommunityTab(
+          onScrollNotification: _handleUserScrollNotification,
+        );
+    }
 
-        switch (index) {
-          case 0:
-            return _HomeTab(
-              onScrollNotification: _handleUserScrollNotification,
-              selectedDay: _selectedDay,
-              greeting: greeting,
-              displayName: displayName,
-              dateLabel: dateLabel,
-              avatarInitials: initials,
-              plannedWorkoutWeekdays: _plannedWorkoutWeekdays,
-              onDaySelected: _onDaySelected,
-              onOpenSettings: () => _openSettings(context),
-              onShowComingSoon: (String feature) =>
-                  _showComingSoon(context, feature),
-            );
-          case 1:
-            return _ProgramTab(
-              onScrollNotification: _handleUserScrollNotification,
-            );
-          case 2:
-            return _ActivityTab(
-              onScrollNotification: _handleUserScrollNotification,
-            );
-          case 3:
-          default:
-            return _CommunityTab(
-              onScrollNotification: _handleUserScrollNotification,
-            );
-        }
-      },
+    return Stack(
+      children: <Widget>[
+        // Content with bottom padding to avoid overlap
+        Positioned.fill(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 80),
+            child: currentPage,
+          ),
+        ),
+        // Glass bottom navigation bar
+        Positioned.fill(
+          child: GlassBottomBar(
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.house),
+                activeIcon: Icon(CupertinoIcons.house_fill),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.book),
+                activeIcon: Icon(CupertinoIcons.book_fill),
+                label: 'Programma',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.flame),
+                activeIcon: Icon(CupertinoIcons.flame_fill),
+                label: 'Attività',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.person_2),
+                activeIcon: Icon(CupertinoIcons.person_2_fill),
+                label: 'Community',
+              ),
+            ],
+            currentIndex: _currentIndex,
+            onTap: (int index) {
+              if (_currentIndex == index) {
+                return;
+              }
+              setState(() {
+                _isTabBarVisible = true;
+                _currentIndex = index;
+                _tabController.index = index;
+              });
+            },
+            reduceTransparency: false,
+            enableParallax: true,
+            enableEdgeGlow: true,
+          ),
+        ),
+      ],
     );
   }
 
@@ -277,359 +284,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final String weekday = weekdayNames[date.weekday - 1];
     final String month = monthNames[date.month - 1];
     return '$weekday ${date.day} $month';
-  }
-}
-
-class _HidableCupertinoTabBar extends CupertinoTabBar {
-  _HidableCupertinoTabBar({
-    required this.isVisible,
-    required this.duration,
-    required this.curve,
-    required super.items,
-    super.currentIndex,
-    super.onTap,
-    Color? activeColor,
-    Color? inactiveColor,
-  }) : _effectiveActiveColor = activeColor ?? CupertinoColors.activeBlue,
-       _effectiveInactiveColor = inactiveColor ?? CupertinoColors.inactiveGray,
-       super(
-         activeColor: activeColor ?? CupertinoColors.activeBlue,
-         inactiveColor: inactiveColor ?? CupertinoColors.inactiveGray,
-         backgroundColor: Colors.transparent,
-         border: Border.all(color: Colors.transparent, width: 0),
-         height: kBottomNavigationBarHeight,
-         iconSize: 28,
-       );
-
-  final bool isVisible;
-  final Duration duration;
-  final Curve curve;
-  final Color _effectiveActiveColor;
-  final Color _effectiveInactiveColor;
-
-  static const double _horizontalPadding = 18;
-  static const double _verticalPadding = 12;
-  static const double _floatingGap = 32;
-  static const double _itemSpacing = 8;
-  static const double _itemHorizontalPadding = 12;
-  static const double _itemVerticalPadding = 10;
-  static const double _blurSigma = 24;
-  static const Duration _itemAnimationDuration = Duration(milliseconds: 260);
-  static const Curve _itemAnimationCurve = Curves.easeOutCubic;
-  static const BorderRadius _barRadius = BorderRadius.all(Radius.circular(26));
-  static const BorderRadius _itemRadius = BorderRadius.all(Radius.circular(18));
-
-  @override
-  Widget build(BuildContext context) {
-    final EdgeInsets targetPadding = isVisible
-        ? EdgeInsets.only(
-            left: _horizontalPadding,
-            right: _horizontalPadding,
-            bottom: _floatingGap,
-          )
-        : EdgeInsets.only(
-            left: _horizontalPadding,
-            right: _horizontalPadding,
-            bottom: 0,
-          );
-
-    final Color resolvedBackground = CupertinoDynamicColor.resolve(
-      AppTheme.liquidGlassTint,
-      context,
-    ).withValues(alpha: 0.68);
-    final Color resolvedBorderColor = CupertinoDynamicColor.resolve(
-      AppTheme.liquidGlassBorder,
-      context,
-    );
-    final Color resolvedShadow = CupertinoDynamicColor.resolve(
-      AppTheme.liquidGlassShadow,
-      context,
-    );
-    final Color resolvedHighlight = resolvedBackground.withValues(alpha: 0.42);
-    final Color resolvedLowlight = resolvedShadow.withValues(alpha: 0.18);
-    final Color resolvedActiveColor = CupertinoDynamicColor.resolve(
-      _effectiveActiveColor,
-      context,
-    );
-    final Color resolvedInactiveColor = CupertinoDynamicColor.resolve(
-      _effectiveInactiveColor,
-      context,
-    );
-
-    return AnimatedPadding(
-      duration: duration,
-      curve: curve,
-      padding: targetPadding,
-      child: SafeArea(
-        top: false,
-        bottom: true,
-        child: Padding(
-          padding: EdgeInsets.symmetric(vertical: _verticalPadding),
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: IgnorePointer(
-              ignoring: !isVisible,
-              child: AnimatedOpacity(
-                opacity: isVisible ? 1 : 0,
-                duration: duration,
-                curve: curve,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: _barRadius,
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: resolvedShadow.withValues(alpha: 0.24),
-                        blurRadius: 40,
-                        offset: const Offset(0, 22),
-                        spreadRadius: -10,
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: _barRadius,
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(
-                        sigmaX: _blurSigma,
-                        sigmaY: _blurSigma,
-                        tileMode: TileMode.clamp,
-                      ),
-                      child: Stack(
-                        children: <Widget>[
-                          Positioned.fill(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                color: resolvedBackground,
-                                borderRadius: _barRadius,
-                                border: Border.all(
-                                  color: resolvedBorderColor,
-                                  width: 0.7,
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned.fill(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                borderRadius: _barRadius,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: <Color>[
-                                    resolvedHighlight,
-                                    resolvedBackground.withValues(alpha: 0.18),
-                                    resolvedBackground.withValues(alpha: 0.04),
-                                  ],
-                                  stops: const <double>[0, 0.55, 1],
-                                ),
-                              ),
-                            ),
-                          ),
-                          Positioned.fill(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                borderRadius: _barRadius,
-                                gradient: LinearGradient(
-                                  begin: Alignment.bottomCenter,
-                                  end: Alignment.topCenter,
-                                  colors: <Color>[
-                                    resolvedLowlight,
-                                    Colors.transparent,
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            child: _FloatingTabRow(
-                              items: items,
-                              currentIndex: currentIndex,
-                              iconSize: iconSize,
-                              activeColor: resolvedActiveColor,
-                              inactiveColor: resolvedInactiveColor,
-                              itemSpacing: _itemSpacing,
-                              itemHorizontalPadding: _itemHorizontalPadding,
-                              itemVerticalPadding: _itemVerticalPadding,
-                              itemRadius: _itemRadius,
-                              duration: _itemAnimationDuration,
-                              curve: _itemAnimationCurve,
-                              onPressed: onTap,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Size get preferredSize => Size.fromHeight(
-    isVisible
-        ? kBottomNavigationBarHeight + (_verticalPadding * 2) + _floatingGap
-        : 0,
-  );
-}
-
-class _FloatingTabRow extends StatelessWidget {
-  const _FloatingTabRow({
-    required this.items,
-    required this.currentIndex,
-    required this.iconSize,
-    required this.activeColor,
-    required this.inactiveColor,
-    required this.itemSpacing,
-    required this.itemHorizontalPadding,
-    required this.itemVerticalPadding,
-    required this.itemRadius,
-    required this.duration,
-    required this.curve,
-    required this.onPressed,
-  });
-
-  final List<BottomNavigationBarItem> items;
-  final int currentIndex;
-  final double iconSize;
-  final Color activeColor;
-  final Color inactiveColor;
-  final double itemSpacing;
-  final double itemHorizontalPadding;
-  final double itemVerticalPadding;
-  final BorderRadius itemRadius;
-  final Duration duration;
-  final Curve curve;
-  final ValueChanged<int>? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final List<Widget> children = <Widget>[];
-
-    for (int index = 0; index < items.length; index++) {
-      children.add(
-        Expanded(
-          child: _FloatingTabItem(
-            index: index,
-            item: items[index],
-            isActive: index == currentIndex,
-            iconSize: iconSize,
-            activeColor: activeColor,
-            inactiveColor: inactiveColor,
-            horizontalPadding: itemHorizontalPadding,
-            verticalPadding: itemVerticalPadding,
-            borderRadius: itemRadius,
-            duration: duration,
-            curve: curve,
-            onPressed: onPressed,
-          ),
-        ),
-      );
-
-      if (index != items.length - 1) {
-        children.add(SizedBox(width: itemSpacing));
-      }
-    }
-
-    return Row(children: children);
-  }
-}
-
-class _FloatingTabItem extends StatelessWidget {
-  const _FloatingTabItem({
-    required this.index,
-    required this.item,
-    required this.isActive,
-    required this.iconSize,
-    required this.activeColor,
-    required this.inactiveColor,
-    required this.horizontalPadding,
-    required this.verticalPadding,
-    required this.borderRadius,
-    required this.duration,
-    required this.curve,
-    required this.onPressed,
-  });
-
-  final int index;
-  final BottomNavigationBarItem item;
-  final bool isActive;
-  final double iconSize;
-  final Color activeColor;
-  final Color inactiveColor;
-  final double horizontalPadding;
-  final double verticalPadding;
-  final BorderRadius borderRadius;
-  final Duration duration;
-  final Curve curve;
-  final ValueChanged<int>? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final String label = item.label ?? '';
-    final TextStyle baseLabelStyle = CupertinoTheme.of(
-      context,
-    ).textTheme.tabLabelTextStyle;
-    final TextStyle resolvedLabelStyle = baseLabelStyle.copyWith(
-      fontSize: 11,
-      fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-      letterSpacing: -0.1,
-      color: isActive ? activeColor : inactiveColor.withValues(alpha: 0.85),
-    );
-
-    final Widget icon = IconTheme(
-      data: IconThemeData(
-        color: isActive ? activeColor : inactiveColor,
-        size: iconSize,
-      ),
-      child: isActive ? item.activeIcon : item.icon,
-    );
-
-    return Semantics(
-      selected: isActive,
-      button: true,
-      label: label.isEmpty ? null : label,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onPressed == null ? null : () => onPressed!(index),
-        child: AnimatedContainer(
-          duration: duration,
-          curve: curve,
-          padding: EdgeInsets.symmetric(
-            horizontal: horizontalPadding,
-            vertical: verticalPadding,
-          ),
-          decoration: BoxDecoration(
-            color: isActive
-                ? activeColor.withValues(alpha: 0.16)
-                : Colors.transparent,
-            borderRadius: borderRadius,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              icon,
-              if (label.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 6),
-                AnimatedDefaultTextStyle(
-                  duration: duration,
-                  curve: curve,
-                  style: resolvedLabelStyle,
-                  child: Text(label),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
 

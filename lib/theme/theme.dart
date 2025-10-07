@@ -182,6 +182,7 @@ class AppTheme {
       primaryColor: baumannPrimaryBlue,
       primaryContrastingColor: Colors.white,
       scaffoldBackgroundColor: liquidGlassBackground,
+      barBackgroundColor: Colors.transparent,
       textTheme: const CupertinoTextThemeData(
         textStyle: TextStyle(
           fontFamily: _fontFamily,
