@@ -106,6 +106,37 @@ class PatientRepository {
     }
   }
 
+  /// Salva i dati completi dell'onboarding su Firestore
+  /// Include risposte, percorso assegnato e flag completamento
+  Future<void> saveOnboardingData(
+    String uid,
+    PatientProfile profile,
+  ) async {
+    try {
+      final docRef = _firestore.collection(_collectionName).doc(uid);
+      final docSnapshot = await docRef.get();
+
+      final data = profile.toFirestore();
+      
+      // Server timestamp per updatedAt
+      data['updatedAt'] = FieldValue.serverTimestamp();
+
+      // Se nuovo documento, aggiungi createdAt
+      if (!docSnapshot.exists) {
+        data['createdAt'] = FieldValue.serverTimestamp();
+      }
+
+      await docRef.set(data, SetOptions(merge: true));
+
+      // Aggiorna cache locale
+      await _cacheOnboardingFlag(uid, profile.onboardingCompleted);
+    } on FirebaseException catch (e) {
+      throw Exception(
+        'Errore salvataggio onboarding: ${e.message ?? 'Riprova'}',
+      );
+    }
+  }
+
   /// Salva il flag onboarding in SharedPreferences
   Future<void> _cacheOnboardingFlag(String uid, bool completed) async {
     try {

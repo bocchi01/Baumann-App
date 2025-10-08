@@ -1,12 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 
-import '../auth/patient_repository.dart';
+import '../auth/login_screen.dart';
 import '../models/patient_profile.dart';
-import '../shared/ui/loading_error.dart';
-import 'login_screen.dart';
-import '../onboarding/onboarding_screen.dart';
+import '../onboarding/onboarding_questionnaire_screen.dart';
 import '../screens/main_screen.dart';
+import '../shared/ui/loading_error.dart';
+import 'patient_repository.dart';
 
 /// Gate che gestisce il routing basato sullo stato di autenticazione
 /// e sul completamento dell'onboarding dell'utente
@@ -172,12 +172,12 @@ class _ProfileLoaderState extends State<_ProfileLoader> {
         // Profilo non trovato (caso improbabile se l'utente è appena registrato)
         if (profile == null) {
           // Crea profilo base e vai all'onboarding
-          return const OnboardingScreen();
+          return const OnboardingQuestionnaireScreen();
         }
 
         // Profilo trovato: routing basato su onboardingCompleted
         if (!profile.onboardingCompleted) {
-          return const OnboardingScreen();
+          return const OnboardingQuestionnaireScreen();
         }
 
         // Onboarding completato → MainScreen
