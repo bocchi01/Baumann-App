@@ -64,11 +64,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   void _openSettings(BuildContext context) {
-    Navigator.of(context).push(
-      CupertinoPageRoute<void>(
-        builder: (_) => const SettingsScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(CupertinoPageRoute<void>(builder: (_) => const SettingsScreen()));
   }
 
   void _showComingSoon(BuildContext context, String feature) {
@@ -138,8 +136,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           avatarInitials: initials,
         ),
       ),
-      const ProgramOverviewScreen(),
-      const ActivitiesScreen(),
+      const NativeTabBarScrollWrapper(child: ProgramOverviewScreen()),
+      const NativeTabBarScrollWrapper(child: ActivitiesScreen()),
       NativeTabBarScrollWrapper(
         child: CommunityScreen(
           onScrollNotification: _handleUserScrollNotification,

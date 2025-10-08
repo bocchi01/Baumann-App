@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../controllers/auth_controller.dart';
@@ -11,16 +11,15 @@ class AuthScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  final FocusNode _passwordFocusNode = FocusNode();
-  final FocusNode _confirmPasswordFocusNode = FocusNode();
 
   bool _isRegisterMode = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -28,302 +27,308 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _passwordFocusNode.dispose();
-    _confirmPasswordFocusNode.dispose();
     super.dispose();
   }
 
-  void _showErrorSnackBar(String message) {
+  void _showErrorDialog(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+    showCupertinoDialog(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Errore'),
+        content: Text(message),
+        actions: [
+          CupertinoDialogAction(
+            child: const Text('OK'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
   }
 
-  Future<void> _handleSubmit(bool isRegister) async {
-    final AuthState state = ref.read(authControllerProvider);
-    if (state.isLoading) {
-      return;
+  bool _isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    return emailRegex.hasMatch(email);
+  }
+
+  bool _validateForm() {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showErrorDialog('Per favore compila tutti i campi richiesti');
+      return false;
     }
 
-    if (!_formKey.currentState!.validate()) {
-      return;
+    if (!_isValidEmail(email)) {
+      _showErrorDialog('Per favore inserisci un indirizzo email valido');
+      return false;
     }
 
-    FocusScope.of(context).unfocus();
-    final String email = _emailController.text.trim();
-    final String password = _passwordController.text.trim();
+    if (password.length < 6) {
+      _showErrorDialog('La password deve contenere almeno 6 caratteri');
+      return false;
+    }
 
-    final AuthController controller = ref.read(authControllerProvider.notifier);
-    if (isRegister) {
+    if (_isRegisterMode) {
+      final name = _nameController.text.trim();
+      final confirmPassword = _confirmPasswordController.text.trim();
+
+      if (name.isEmpty) {
+        _showErrorDialog('Per favore inserisci il tuo nome');
+        return false;
+      }
+
+      if (password != confirmPassword) {
+        _showErrorDialog('Le password non coincidono');
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  Future<void> _handleSubmit() async {
+    final state = ref.read(authControllerProvider);
+    if (state.isLoading) return;
+
+    if (!_validateForm()) return;
+
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    final controller = ref.read(authControllerProvider.notifier);
+    if (_isRegisterMode) {
       await controller.registerWithEmail(email, password);
     } else {
       await controller.signInWithEmail(email, password);
     }
   }
 
-  Future<void> _onRegisterPressed() async {
-    if (!_isRegisterMode) {
-      setState(() {
-        _isRegisterMode = true;
-      });
-      return;
-    }
-    await _handleSubmit(true);
-  }
-
-  void _resetToLoginMode() {
+  void _toggleMode() {
     setState(() {
-      _isRegisterMode = false;
-      _nameController.clear();
-      _confirmPasswordController.clear();
+      _isRegisterMode = !_isRegisterMode;
+      if (!_isRegisterMode) {
+        _nameController.clear();
+        _confirmPasswordController.clear();
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final AuthState authState = ref.watch(authControllerProvider);
-    final ThemeData theme = Theme.of(context);
-    final TextStyle? inputTextStyle = theme.textTheme.bodyLarge;
-    final Color cursorColor = theme.colorScheme.primary;
+    final authState = ref.watch(authControllerProvider);
 
-    ref.listen<AuthState>(authControllerProvider,
-        (AuthState? previous, AuthState next) {
+    ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (next.errorMessage != null && next.errorMessage!.isNotEmpty) {
-        _showErrorSnackBar(next.errorMessage!);
+        _showErrorDialog(next.errorMessage!);
         ref.read(authControllerProvider.notifier).clearError();
       }
     });
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Accedi o Registrati'),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  const Text(
-                    'Bentornato!',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Inserisci le tue credenziali per continuare oppure crea un nuovo account.',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: AutofillGroup(
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              if (_isRegisterMode) ...<Widget>[
-                                TextFormField(
-                                  controller: _nameController,
-                                  autofocus: true,
-                                  style: inputTextStyle,
-                                  cursorColor: cursorColor,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Nome',
-                                    prefixIcon: Icon(Icons.person_outline),
-                                  ),
-                                  textCapitalization: TextCapitalization.words,
-                                  textInputAction: TextInputAction.next,
-                                  validator: (String? value) {
-                                    if ((value ?? '').trim().isEmpty) {
-                                      return 'Inserisci il tuo nome.';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-                              TextFormField(
-                                controller: _emailController,
-                                autofocus: !_isRegisterMode,
-                                style: inputTextStyle,
-                                cursorColor: cursorColor,
-                                decoration: const InputDecoration(
-                                  labelText: 'Email',
-                                  hintText: 'nome@esempio.com',
-                                  prefixIcon: Icon(Icons.email_outlined),
-                                ),
-                                keyboardType: TextInputType.emailAddress,
-                                autofillHints: const <String>[
-                                  AutofillHints.email
-                                ],
-                                textInputAction: TextInputAction.next,
-                                textCapitalization: TextCapitalization.none,
-                                onFieldSubmitted: (_) =>
-                                    _passwordFocusNode.requestFocus(),
-                                validator: (String? value) {
-                                  final String trimmed = (value ?? '').trim();
-                                  if (trimmed.isEmpty) {
-                                    return 'Inserisci una email.';
-                                  }
-                                  if (!RegExp(
-                                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                      .hasMatch(trimmed)) {
-                                    return 'Inserisci una email valida.';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _passwordController,
-                                focusNode: _passwordFocusNode,
-                                style: inputTextStyle,
-                                cursorColor: cursorColor,
-                                decoration: const InputDecoration(
-                                  labelText: 'Password',
-                                  prefixIcon: Icon(Icons.lock_outline),
-                                ),
-                                obscureText: true,
-                                textInputAction: _isRegisterMode
-                                    ? TextInputAction.next
-                                    : TextInputAction.done,
-                                autofillHints: const <String>[
-                                  AutofillHints.password
-                                ],
-                                enableSuggestions: false,
-                                onFieldSubmitted: (_) {
-                                  if (_isRegisterMode) {
-                                    _confirmPasswordFocusNode.requestFocus();
-                                  } else {
-                                    _handleSubmit(false);
-                                  }
-                                },
-                                validator: (String? value) {
-                                  if ((value ?? '').isEmpty) {
-                                    return 'La password è obbligatoria.';
-                                  }
-                                  if ((value ?? '').length < 6) {
-                                    return 'La password deve contenere almeno 6 caratteri.';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              if (_isRegisterMode) ...<Widget>[
-                                const SizedBox(height: 16),
-                                TextFormField(
-                                  controller: _confirmPasswordController,
-                                  focusNode: _confirmPasswordFocusNode,
-                                  style: inputTextStyle,
-                                  cursorColor: cursorColor,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Conferma Password',
-                                    prefixIcon: Icon(Icons.lock_reset_outlined),
-                                  ),
-                                  obscureText: true,
-                                  textInputAction: TextInputAction.done,
-                                  validator: (String? value) {
-                                    if (!_isRegisterMode) {
-                                      return null;
-                                    }
-                                    if ((value ?? '').isEmpty) {
-                                      return 'Conferma la password.';
-                                    }
-                                    if (value != _passwordController.text) {
-                                      return 'Le password non coincidono.';
-                                    }
-                                    return null;
-                                  },
-                                  onFieldSubmitted: (_) => _handleSubmit(true),
-                                ),
-                              ],
-                              const SizedBox(height: 24),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton(
-                                  onPressed: authState.isLoading
-                                      ? null
-                                      : () => _handleSubmit(false),
-                                  child: authState.isLoading && !_isRegisterMode
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2),
-                                        )
-                                      : const Text('Accedi'),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton(
-                                  onPressed: authState.isLoading
-                    ? null
-                    : () => _onRegisterPressed(),
-                                  child: authState.isLoading && _isRegisterMode
-                                      ? const SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2),
-                                        )
-                                      : Text(_isRegisterMode
-                                          ? 'Crea il tuo account'
-                                          : 'Registrati'),
-                                ),
-                              ),
-                              if (_isRegisterMode)
-                                TextButton(
-                                  onPressed: authState.isLoading
-                                      ? null
-                                      : _resetToLoginMode,
-                                  child:
-                                      const Text('Hai già un account? Accedi'),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Divider(),
-                  const SizedBox(height: 16),
-                  if (!_isRegisterMode) ...<Widget>[
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: authState.isLoading ? null : () {},
-                        icon: const Icon(Icons.g_mobiledata),
-                        label: const Text('Accedi con Google'),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: authState.isLoading ? null : () {},
-                        icon: const Icon(Icons.apple),
-                        label: const Text('Accedi con Apple'),
-                      ),
-                    ),
-                  ],
-                ],
+    return CupertinoPageScaffold(
+      child: Stack(
+        children: [
+          // Gradient Background
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF0A84FF), Color(0xFF0051D5)],
               ),
             ),
           ),
-        ),
+          // Content
+          SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Spacer(),
+                        // Title
+                        Text(
+                          _isRegisterMode
+                              ? 'Inizia il Tuo Percorso'
+                              : 'Bentornato',
+                          style: const TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: CupertinoColors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _isRegisterMode
+                              ? 'Crea un account e inizia a prenderti cura della tua postura'
+                              : 'Continua a prenderti cura della tua postura',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: CupertinoColors.white,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+                        // Auth Card
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: CupertinoColors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: CupertinoColors.black.withValues(
+                                  alpha: 0.1,
+                                ),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: _buildFormContent(authState),
+                        ),
+                        const Spacer(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildFormContent(AuthState authState) {
+    return Column(
+      children: [
+        if (_isRegisterMode) ...[
+          _buildTextField(
+            controller: _nameController,
+            placeholder: 'Nome',
+            prefix: const Icon(CupertinoIcons.person, color: Color(0xFF0A84FF)),
+            keyboardType: TextInputType.name,
+            textCapitalization: TextCapitalization.words,
+          ),
+          const SizedBox(height: 16),
+        ],
+        _buildTextField(
+          controller: _emailController,
+          placeholder: 'Email',
+          prefix: const Icon(CupertinoIcons.mail, color: Color(0xFF0A84FF)),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _passwordController,
+          placeholder: 'Password',
+          prefix: const Icon(CupertinoIcons.lock, color: Color(0xFF0A84FF)),
+          obscureText: _obscurePassword,
+          suffix: CupertinoButton(
+            padding: EdgeInsets.zero,
+            onPressed: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
+            child: Icon(
+              _obscurePassword ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+              color: CupertinoColors.systemGrey,
+            ),
+          ),
+        ),
+        if (_isRegisterMode) ...[
+          const SizedBox(height: 16),
+          _buildTextField(
+            controller: _confirmPasswordController,
+            placeholder: 'Conferma Password',
+            prefix: const Icon(CupertinoIcons.lock, color: Color(0xFF0A84FF)),
+            obscureText: _obscureConfirmPassword,
+            suffix: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                setState(() {
+                  _obscureConfirmPassword = !_obscureConfirmPassword;
+                });
+              },
+              child: Icon(
+                _obscureConfirmPassword
+                    ? CupertinoIcons.eye
+                    : CupertinoIcons.eye_slash,
+                color: CupertinoColors.systemGrey,
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        // Primary CTA
+        SizedBox(
+          width: double.infinity,
+          child: CupertinoButton(
+            onPressed: authState.isLoading ? null : _handleSubmit,
+            color: const Color(0xFF0A84FF),
+            borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: authState.isLoading
+                ? const CupertinoActivityIndicator(color: CupertinoColors.white)
+                : Text(
+                    _isRegisterMode ? 'Inizia Ora' : 'Accedi',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Toggle Mode
+        CupertinoButton(
+          onPressed: authState.isLoading ? null : _toggleMode,
+          child: Text(
+            _isRegisterMode
+                ? 'Hai già un account? Accedi'
+                : 'Non hai un account? Registrati',
+            style: const TextStyle(color: Color(0xFF0A84FF), fontSize: 15),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String placeholder,
+    Widget? prefix,
+    Widget? suffix,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+  }) {
+    return CupertinoTextField(
+      controller: controller,
+      placeholder: placeholder,
+      prefix: prefix != null
+          ? Padding(padding: const EdgeInsets.only(left: 12), child: prefix)
+          : null,
+      suffix: suffix != null
+          ? Padding(padding: const EdgeInsets.only(right: 8), child: suffix)
+          : null,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: CupertinoColors.systemGrey6,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      style: const TextStyle(fontSize: 16, color: CupertinoColors.black),
     );
   }
 }
