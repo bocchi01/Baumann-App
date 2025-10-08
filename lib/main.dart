@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'auth/auth_gate.dart';
 import 'firebase_options.dart';
 import 'navigation/app_router.dart';
-import 'screens/auth_wrapper.dart';
 import 'theme/theme.dart';
 import 'utils/network_probe.dart';
 
@@ -69,7 +69,7 @@ class PostureApp extends ConsumerWidget {
         );
       },
       home: firebaseInit.when(
-        data: (_) => const AuthWrapper(),
+        data: (_) => const AuthGate(),
         loading: () => const _FirebaseLoadingScreen(),
         error: (Object error, StackTrace stackTrace) => _FirebaseErrorScreen(
           error: error,
